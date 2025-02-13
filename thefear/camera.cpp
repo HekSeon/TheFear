@@ -219,7 +219,6 @@ int GetViewPortType(void)
 void SetCameraAT(XMFLOAT3 pos)
 {
 	ProcessMouseMovement();
-	ShowCursor(FALSE);
 
 	g_Camera.at = pos;
 
@@ -232,53 +231,59 @@ void SetCameraAT(XMFLOAT3 pos)
 
 void ProcessMouseMovement() {
 	static bool firstMouse = true;
-	static bool resettingCursor = false;
-	static bool skipNextFrame = false; // Farenin sıfırlandığı kareyi atlamak için
-
+	static bool isMouseLocked = false; // Fare kilitli mi kontrolü
 	const float mouseSensitivity = 0.002f; // Fare hassasiyeti
+
 	POINT mousePos;
 	GetCursorPos(&mousePos);
 
-	if (firstMouse) {
-		lastMouseX = mousePos.x;
-		lastMouseY = mousePos.y;
+	int centerX = SCREEN_WIDTH / 2;
+	int centerY = SCREEN_HEIGHT / 2;
 
-		firstMouse = false;
-		return; // İlk karede hareketi işleme alma
+	// F1 tuşuna basılırsa fare serbest bırak
+	if (GetKeyboardTrigger(DIK_F1)) {
+		ClipCursor(NULL);
+		ShowCursor(TRUE);
+		isMouseLocked = false;
+		return;
+	}
+	// F2 tuşuna basılırsa fareyi kilitle
+	else if (GetKeyboardTrigger(DIK_F2)) {
+		ShowCursor(FALSE);
+		isMouseLocked = true;
+		SetCursorPos(centerX, centerY);
 	}
 
-	if (skipNextFrame) {
-		// Fare sıfırlandıktan sonraki kareyi atla
-		lastMouseX = mousePos.x;
-		lastMouseY = mousePos.y;
-		skipNextFrame = false;
+	// Eğer fare serbestse hareketi işlemeden çık
+	if (!isMouseLocked) return;
+
+	// İlk karede fareyi sıfırla
+	if (firstMouse) {
+		lastMouseX = centerX;
+		lastMouseY = centerY;
+		SetCursorPos(centerX, centerY);
+		firstMouse = false;
 		return;
 	}
 
-	if (!resettingCursor) {
-		int deltaX = mousePos.x - lastMouseX;
-		int deltaY = mousePos.y - lastMouseY;
+	// Farenin hareket farklarını hesapla
+	int deltaX = mousePos.x - lastMouseX;
+	int deltaY = mousePos.y - lastMouseY;
 
-		// Hassasiyet uygula
-		g_Camera.rot.y += deltaX * mouseSensitivity;
-		g_Camera.rot.x -= deltaY * mouseSensitivity; // Y ekseni ters olduğu için çıkartıyoruz
+	// Hassasiyet uygula
+	g_Camera.rot.y += deltaX * mouseSensitivity;
+	g_Camera.rot.x -= deltaY * mouseSensitivity; // Y ekseni ters olduğu için çıkartıyoruz
 
-		// Yukarı-aşağı sınırlandırma
-		if (g_Camera.rot.x > XM_PI / 2.0f) g_Camera.rot.x = XM_PI / 2.0f - 0.01f;
-		if (g_Camera.rot.x < -XM_PI / 2.0f) g_Camera.rot.x = -XM_PI / 2.0f + 0.01f;
+	// Yukarı-aşağı sınırlandırma
+	if (g_Camera.rot.x > XM_PI / 2.0f) g_Camera.rot.x = XM_PI / 2.0f - 0.01f;
+	if (g_Camera.rot.x < -XM_PI / 2.0f) g_Camera.rot.x = -XM_PI / 2.0f + 0.01f;
 
-
-		// Farenin merkezlenmesi
-		resettingCursor = true;
-        
-		skipNextFrame = true; // Sıfırlandıktan sonraki kareyi atlayacağız
-		SetCursorPos(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
-
-	}
-	else {
-		resettingCursor = false; // Bir sonraki karede tekrar güncellenebilir
-	}
+	// Farenin merkezlenmesi (FPS kontrolü için)
+	SetCursorPos(centerX, centerY);
+	lastMouseX = centerX;
+	lastMouseY = centerY;
 }
+
 
 
 void ChangeCameraMode(int mode)

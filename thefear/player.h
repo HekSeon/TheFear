@@ -50,7 +50,8 @@ struct PLAYER
 };
 
 
-
+void playtpsanimation(void);
+void playfpsanimation(void);
 
 //*****************************************************************************
 // プロトタイプ宣言

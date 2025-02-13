@@ -41,6 +41,8 @@
 //*****************************************************************************
 
 
+
+
 //*****************************************************************************
 // グローバル変数
 //*****************************************************************************
@@ -54,7 +56,6 @@ static BOOL g_Load = FALSE;
 
 // プレイヤーの階層アニメーションデータ
 // プレイヤーの左右パーツを動かしているアニメデータ
-
 
 
 	static INTERPOLATION_DATA move_tbl_head[] = {	// pos, rot, scl, frame
@@ -115,59 +116,7 @@ static BOOL g_Load = FALSE;
 	static INTERPOLATION_DATA idle_tbl_rleg[] = {	// pos, rot, scl, frame
 		{ XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f),         XMFLOAT3(1.0f, 1.0f, 1.0f), 15 },
 		{ XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f),    XMFLOAT3(1.0f, 1.0f, 1.0f), 30 },
-
 	};
-
-
-
-	// fps animation
-
-	//static INTERPOLATION_DATA Fidle_tbl_larm[] = {	// pos, rot, scl, frame
-	//	{ XMFLOAT3(0.0f, 3.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f),         XMFLOAT3(1.0f, 1.0f, 1.0f), 15 },
-	//	{ XMFLOAT3(0.0f, 3.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f),    XMFLOAT3(1.0f, 1.0f, 1.0f), 30 },
-	//};
-
-	//static INTERPOLATION_DATA Fidle_tbl_rarm[] = {	// pos, rot, scl, frame
-	//	{ XMFLOAT3(0.0f, 3.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f),         XMFLOAT3(1.0f, 1.0f, 1.0f), 15 },
-	//	{ XMFLOAT3(0.0f, 3.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f),    XMFLOAT3(1.0f, 1.0f, 1.0f), 30 },
-
-	//};
-
-	//static INTERPOLATION_DATA Fidle_tbl_lleg[] = {	// pos, rot, scl, frame
-	//	{ XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f),         XMFLOAT3(1.0f, 1.0f, 1.0f), 15 },
-	//	{ XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f),    XMFLOAT3(1.0f, 1.0f, 1.0f), 30 },
-
-	//};
-
-	//static INTERPOLATION_DATA Fidle_tbl_rleg[] = {	// pos, rot, scl, frame
-	//	{ XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f),         XMFLOAT3(1.0f, 1.0f, 1.0f), 15 },
-	//	{ XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f),    XMFLOAT3(1.0f, 1.0f, 1.0f), 30 },
-
-	//};
-
-	//static INTERPOLATION_DATA Fmove_tbl_larm[] = {	// pos, rot, scl, frame
-	//	{ XMFLOAT3(0.0f, 3.0f, 0.0f), XMFLOAT3(XM_PI / 9, 0.0f, 0.0f),         XMFLOAT3(1.0f, 1.0f, 1.0f), 15 },
-	//	{ XMFLOAT3(0.0f, 3.0f, 0.0f), XMFLOAT3(-XM_PI / 9.0f, 0.0f, 0.0f),    XMFLOAT3(1.0f, 1.0f, 1.0f), 30 },
-	//};
-
-	//static INTERPOLATION_DATA Fmove_tbl_rarm[] = {	// pos, rot, scl, frame
-	//	{ XMFLOAT3(0.0f, 3.0f, 0.0f), XMFLOAT3(-XM_PI / 9, 0.0f, 0.0f),         XMFLOAT3(1.0f, 1.0f, 1.0f), 15 },
-	//	{ XMFLOAT3(0.0f, 3.0f, 0.0f), XMFLOAT3(XM_PI / 9.0f, 0.0f, 0.0f),    XMFLOAT3(1.0f, 1.0f, 1.0f), 30 },
-
-	//};
-
-	//static INTERPOLATION_DATA Fmove_tbl_lleg[] = {	// pos, rot, scl, frame
-	//	{ XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(-XM_PI / 9.0f, 0.0f, 0.0f),         XMFLOAT3(1.0f, 1.0f, 1.0f), 15 },
-	//	{ XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(XM_PI / 9, 0.0f, 0.0f),    XMFLOAT3(1.0f, 1.0f, 1.0f), 30 },
-
-	//};
-
-	//static INTERPOLATION_DATA Fmove_tbl_rleg[] = {	// pos, rot, scl, frame
-	//	{ XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(XM_PI / 9, 0.0f, 0.0f),         XMFLOAT3(1.0f, 1.0f, 1.0f), 15 },
-	//	{ XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(-XM_PI / 9.0f, 0.0f, 0.0f),    XMFLOAT3(1.0f, 1.0f, 1.0f), 30 },
-
-	//};
-
 	static INTERPOLATION_DATA* g_IdleTblAdr[] =
 	{
 		idle_tbl_head,
@@ -187,7 +136,59 @@ static BOOL g_Load = FALSE;
 
 	};
 
-	/*static INTERPOLATION_DATA* g_FIdleTblAdr[] =
+
+
+	/* fps animation*/
+
+	static INTERPOLATION_DATA Fidle_tbl_larm[] = {	// pos, rot, scl, frame
+		{ XMFLOAT3(0.0f, 3.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f),         XMFLOAT3(1.0f, 1.0f, 1.0f), 15 },
+		{ XMFLOAT3(0.0f, 3.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f),    XMFLOAT3(1.0f, 1.0f, 1.0f), 30 },
+	};
+
+	static INTERPOLATION_DATA Fidle_tbl_rarm[] = {	// pos, rot, scl, frame
+		{ XMFLOAT3(0.0f, 3.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f),         XMFLOAT3(1.0f, 1.0f, 1.0f), 15 },
+		{ XMFLOAT3(0.0f, 3.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f),    XMFLOAT3(1.0f, 1.0f, 1.0f), 30 },
+
+	};
+
+	static INTERPOLATION_DATA Fidle_tbl_lleg[] = {	// pos, rot, scl, frame
+		{ XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f),         XMFLOAT3(1.0f, 1.0f, 1.0f), 15 },
+		{ XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f),    XMFLOAT3(1.0f, 1.0f, 1.0f), 30 },
+
+	};
+
+	static INTERPOLATION_DATA Fidle_tbl_rleg[] = {	// pos, rot, scl, frame
+		{ XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f),         XMFLOAT3(1.0f, 1.0f, 1.0f), 15 },
+		{ XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f),    XMFLOAT3(1.0f, 1.0f, 1.0f), 30 },
+
+	};
+
+	static INTERPOLATION_DATA Fmove_tbl_larm[] = {	// pos, rot, scl, frame
+		{ XMFLOAT3(0.0f, 3.0f, 0.0f), XMFLOAT3(XM_PI / 9, 0.0f, 0.0f),         XMFLOAT3(1.0f, 1.0f, 1.0f), 15 },
+		{ XMFLOAT3(0.0f, 3.0f, 0.0f), XMFLOAT3(-XM_PI / 9.0f, 0.0f, 0.0f),    XMFLOAT3(1.0f, 1.0f, 1.0f), 30 },
+	};
+
+	static INTERPOLATION_DATA Fmove_tbl_rarm[] = {	// pos, rot, scl, frame
+		{ XMFLOAT3(0.0f, 3.0f, 0.0f), XMFLOAT3(-XM_PI / 9, 0.0f, 0.0f),         XMFLOAT3(1.0f, 1.0f, 1.0f), 15 },
+		{ XMFLOAT3(0.0f, 3.0f, 0.0f), XMFLOAT3(XM_PI / 9.0f, 0.0f, 0.0f),    XMFLOAT3(1.0f, 1.0f, 1.0f), 30 },
+
+	};
+
+	static INTERPOLATION_DATA Fmove_tbl_lleg[] = {	// pos, rot, scl, frame
+		{ XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(-XM_PI / 9.0f, 0.0f, 0.0f),         XMFLOAT3(1.0f, 1.0f, 1.0f), 15 },
+		{ XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(XM_PI / 9, 0.0f, 0.0f),    XMFLOAT3(1.0f, 1.0f, 1.0f), 30 },
+
+	};
+
+	static INTERPOLATION_DATA Fmove_tbl_rleg[] = {	// pos, rot, scl, frame
+		{ XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(XM_PI / 9, 0.0f, 0.0f),         XMFLOAT3(1.0f, 1.0f, 1.0f), 15 },
+		{ XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(-XM_PI / 9.0f, 0.0f, 0.0f),    XMFLOAT3(1.0f, 1.0f, 1.0f), 30 },
+
+	};
+
+
+
+	static INTERPOLATION_DATA* g_FIdleTblAdr[] =
 	{
 		Fidle_tbl_larm,
 		Fidle_tbl_rarm,
@@ -202,103 +203,150 @@ static BOOL g_Load = FALSE;
 		Fmove_tbl_lleg,
 		Fmove_tbl_rleg,
 
-	};*/
+	};
 
-	
+
+
 
 
 //=============================================================================
 // 初期化処理
 //=============================================================================
-HRESULT InitPlayer(void)
-{
-	LoadModel(MODEL_PLAYER, &g_Player.model);
-	g_Player.load = TRUE;
-
-	g_Player.pos = { 0.0f, PLAYER_OFFSET_Y, 0.0f };
-	g_Player.rot = { 0.0f, 0.0f, 0.0f };
-	g_Player.scl = { 0.5f, 0.5f, 0.5f };
-
-	g_Player.spd = 0.0f;			// 移動スピードクリア
-	g_Player.size = PLAYER_SIZE;	// 当たり判定の大きさ
-
-	g_Player.use = TRUE;
-
-	// ここでプレイヤー用の影を作成している
-	XMFLOAT3 pos = g_Player.pos;
-	pos.y -= (PLAYER_OFFSET_Y - 0.1f);
-	g_Player.shadowIdx = CreateShadow(pos, PLAYER_SHADOW_SIZE, PLAYER_SHADOW_SIZE);
-	//          ↑
-	//        このメンバー変数が生成した影のIndex番号
-
-
-
-	// 階層アニメーション用の初期化処理
-	g_Player.parent = NULL;			// 本体（親）なのでNULLを入れる
-
-	// パーツの初期化
-	for (int i = 0; i < PLAYER_PARTS_MAX; i++)
+	HRESULT InitPlayer(void)
 	{
-		g_Parts[i].use = FALSE;
+		LoadModel(MODEL_PLAYER, &g_Player.model);
+		g_Player.load = TRUE;
 
-		// 位置・回転・スケールの初期設定
-		g_Parts[i].pos = XMFLOAT3(0.0f, 0.0f, 0.0f);
-		g_Parts[i].rot = XMFLOAT3(0.0f, 0.0f, 0.0f);
-		g_Parts[i].scl = XMFLOAT3(1.0f, 1.0f, 1.0f);
+		g_Player.pos = { 0.0f, PLAYER_OFFSET_Y, 0.0f };
+		g_Player.rot = { 0.0f, 0.0f, 0.0f };
+		g_Player.scl = { 0.5f, 0.5f, 0.5f };
 
-		// 親子関係
-		g_Parts[i].parent = &g_Player;		// ← ここに親のアドレスを入れる
-	//	g_Parts[腕].parent= &g_Player;		// 腕だったら親は本体（プレイヤー）
-	//	g_Parts[手].parent= &g_Paerts[腕];	// 指が腕の子供だった場合の例
+		g_Player.spd = 0.0f;			// 移動スピードクリア
+		g_Player.size = PLAYER_SIZE;	// 当たり判定の大きさ
 
-		// 階層アニメーション用のメンバー変数の初期化
-		g_Parts[i].time = 0.0f;			// 線形補間用のタイマーをクリア
-		g_Parts[i].tblNo = 0;			// 再生する行動データテーブルNoをセット
-		g_Parts[i].tblMax = 0;			// 再生する行動データテーブルのレコード数をセット
+		g_Player.use = TRUE;
 
-		// パーツの読み込みはまだしていない
-		g_Parts[i].load = 0;
-	}
+		// ここでプレイヤー用の影を作成している
+		XMFLOAT3 pos = g_Player.pos;
+		pos.y -= (PLAYER_OFFSET_Y - 0.1f);
+		g_Player.shadowIdx = CreateShadow(pos, PLAYER_SHADOW_SIZE, PLAYER_SHADOW_SIZE);
+		//          ↑
+		//        このメンバー変数が生成した影のIndex番号
 
+
+
+		// 階層アニメーション用の初期化処理
+		g_Player.parent = NULL;			// 本体（親）なのでNULLを入れる
+
+		// パーツの初期化
+		for (int i = 0; i < PLAYER_PARTS_MAX; i++)
+		{
+			g_Parts[i].use = FALSE;
+
+			// 位置・回転・スケールの初期設定
+			g_Parts[i].pos = XMFLOAT3(0.0f, 0.0f, 0.0f);
+			g_Parts[i].rot = XMFLOAT3(0.0f, 0.0f, 0.0f);
+			g_Parts[i].scl = XMFLOAT3(1.0f, 1.0f, 1.0f);
+
+			// 親子関係
+			g_Parts[i].parent = &g_Player;		// ← ここに親のアドレスを入れる
+			//	g_Parts[腕].parent= &g_Player;		// 腕だったら親は本体（プレイヤー）
+			//	g_Parts[手].parent= &g_Paerts[腕];	// 指が腕の子供だった場合の例
+
+				// 階層アニメーション用のメンバー変数の初期化
+			g_Parts[i].time = 0.0f;			// 線形補間用のタイマーをクリア
+			g_Parts[i].tblNo = 0;			// 再生する行動データテーブルNoをセット
+			g_Parts[i].tblMax = 0;			// 再生する行動データテーブルのレコード数をセット
+
+			// パーツの読み込みはまだしていない
+			g_Parts[i].load = 0;
+		}
+
+
+		if (g_CameraMode == THIRD_PERSON)
+		{
+			playtpsanimation();
+		}
+		else if (g_CameraMode == FIRST_PERSON)
+		{
+			playfpsanimation();
+		}
+	
 
 	
-		g_Parts[0].use = TRUE;
-		g_Parts[0].parent = &g_Player;	// 親をセット
-		g_Parts[0].tblNo = 0;			// 再生するアニメデータの先頭アドレスをセット
-		g_Parts[0].tblMax = sizeof(move_tbl_head) / sizeof(INTERPOLATION_DATA);	// 再生するアニメデータのレコード数をセット
-		g_Parts[0].load = 1;
-		LoadModel(MODEL_PLAYER_HEAD, &g_Parts[0].model);
+	return S_OK;
+}
 
-		g_Parts[1].use = TRUE;
-		g_Parts[1].parent = &g_Player;	// 親をセット
-		g_Parts[1].tblNo = 1;			// 再生するアニメデータの先頭アドレスをセット
-		g_Parts[1].tblMax = sizeof(move_tbl_larm) / sizeof(INTERPOLATION_DATA);	// 再生するアニメデータのレコード数をセット
-		g_Parts[1].load = 1;
-		LoadModel(MODEL_PLAYER_LARM, &g_Parts[1].model);
+void playtpsanimation(void)
+{
 
-		g_Parts[2].use = TRUE;
-		g_Parts[2].parent = &g_Player;	// 親をセット
-		g_Parts[2].tblNo = 2;			// 再生するアニメデータの先頭アドレスをセット
-		g_Parts[2].tblMax = sizeof(move_tbl_rarm) / sizeof(INTERPOLATION_DATA);		// 再生するアニメデータのレコード数をセット
-		g_Parts[2].load = 1;
-		LoadModel(MODEL_PLAYER_RARM, &g_Parts[2].model);
+	g_Parts[0].use = TRUE;
+	g_Parts[0].parent = &g_Player;	// 親をセット
+	g_Parts[0].tblNo = 0;			// 再生するアニメデータの先頭アドレスをセット
+	g_Parts[0].tblMax = sizeof(move_tbl_head) / sizeof(INTERPOLATION_DATA);	// 再生するアニメデータのレコード数をセット
+	g_Parts[0].load = 1;
+	LoadModel(MODEL_PLAYER_HEAD, &g_Parts[0].model);
 
-		g_Parts[3].use = TRUE;
-		g_Parts[3].parent = &g_Player;	// 親をセット
-		g_Parts[3].tblNo = 3;			// 再生するアニメデータの先頭アドレスをセット
-		g_Parts[3].tblMax = sizeof(move_tbl_lleg) / sizeof(INTERPOLATION_DATA);	// 再生するアニメデータのレコード数をセット
-		g_Parts[3].load = 1;
-		LoadModel(MODEL_PLAYER_LLEG, &g_Parts[3].model);
+	g_Parts[1].use = TRUE;
+	g_Parts[1].parent = &g_Player;	// 親をセット
+	g_Parts[1].tblNo = 1;			// 再生するアニメデータの先頭アドレスをセット
+	g_Parts[1].tblMax = sizeof(move_tbl_larm) / sizeof(INTERPOLATION_DATA);	// 再生するアニメデータのレコード数をセット
+	g_Parts[1].load = 1;
+	LoadModel(MODEL_PLAYER_LARM, &g_Parts[1].model);
 
-		g_Parts[4].use = TRUE;
-		g_Parts[4].parent = &g_Player;	// 親をセット
-		g_Parts[4].tblNo = 4;			// 再生するアニメデータの先頭アドレスをセット
-		g_Parts[4].tblMax = sizeof(move_tbl_rleg) / sizeof(INTERPOLATION_DATA);		// 再生するアニメデータのレコード数をセット
-		g_Parts[4].load = 1;
-		LoadModel(MODEL_PLAYER_RLEG, &g_Parts[4].model);
+	g_Parts[2].use = TRUE;
+	g_Parts[2].parent = &g_Player;	// 親をセット
+	g_Parts[2].tblNo = 2;			// 再生するアニメデータの先頭アドレスをセット
+	g_Parts[2].tblMax = sizeof(move_tbl_rarm) / sizeof(INTERPOLATION_DATA);		// 再生するアニメデータのレコード数をセット
+	g_Parts[2].load = 1;
+	LoadModel(MODEL_PLAYER_RARM, &g_Parts[2].model);
 
+	g_Parts[3].use = TRUE;
+	g_Parts[3].parent = &g_Player;	// 親をセット
+	g_Parts[3].tblNo = 3;			// 再生するアニメデータの先頭アドレスをセット
+	g_Parts[3].tblMax = sizeof(move_tbl_lleg) / sizeof(INTERPOLATION_DATA);	// 再生するアニメデータのレコード数をセット
+	g_Parts[3].load = 1;
+	LoadModel(MODEL_PLAYER_LLEG, &g_Parts[3].model);
 
-return S_OK;
+	g_Parts[4].use = TRUE;
+	g_Parts[4].parent = &g_Player;	// 親をセット
+	g_Parts[4].tblNo = 4;			// 再生するアニメデータの先頭アドレスをセット
+	g_Parts[4].tblMax = sizeof(move_tbl_rleg) / sizeof(INTERPOLATION_DATA);		// 再生するアニメデータのレコード数をセット
+	g_Parts[4].load = 1;
+	LoadModel(MODEL_PLAYER_RLEG, &g_Parts[4].model);
+
+}
+
+void playfpsanimation(void)
+{
+	g_Parts[1].use = TRUE;
+	g_Parts[1].parent = &g_Player;	// 親をセット
+	g_Parts[1].tblNo = 1;			// 再生するアニメデータの先頭アドレスをセット
+	g_Parts[1].tblMax = sizeof(Fmove_tbl_larm) / sizeof(INTERPOLATION_DATA);	// 再生するアニメデータのレコード数をセット
+	g_Parts[1].load = 1;
+	LoadModel(MODEL_PLAYER_LARM, &g_Parts[1].model);
+
+	g_Parts[2].use = TRUE;
+	g_Parts[2].parent = &g_Player;	// 親をセット
+	g_Parts[2].tblNo = 2;			// 再生するアニメデータの先頭アドレスをセット
+	g_Parts[2].tblMax = sizeof(Fmove_tbl_rarm) / sizeof(INTERPOLATION_DATA);		// 再生するアニメデータのレコード数をセット
+	g_Parts[2].load = 1;
+	LoadModel(MODEL_PLAYER_RARM, &g_Parts[2].model);
+
+	g_Parts[3].use = TRUE;
+	g_Parts[3].parent = &g_Player;	// 親をセット
+	g_Parts[3].tblNo = 3;			// 再生するアニメデータの先頭アドレスをセット
+	g_Parts[3].tblMax = sizeof(Fmove_tbl_lleg) / sizeof(INTERPOLATION_DATA);	// 再生するアニメデータのレコード数をセット
+	g_Parts[3].load = 1;
+	LoadModel(MODEL_PLAYER_LLEG, &g_Parts[3].model);
+
+	g_Parts[4].use = TRUE;
+	g_Parts[4].parent = &g_Player;	// 親をセット
+	g_Parts[4].tblNo = 4;			// 再生するアニメデータの先頭アドレスをセット
+	g_Parts[4].tblMax = sizeof(Fmove_tbl_rleg) / sizeof(INTERPOLATION_DATA);		// 再生するアニメデータのレコード数をセット
+	g_Parts[4].load = 1;
+	LoadModel(MODEL_PLAYER_RLEG, &g_Parts[4].model);
+
 }
 
 //=============================================================================
