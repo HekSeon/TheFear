@@ -56,7 +56,7 @@ HRESULT InitGame(void)
 	
 	InitSword();
 
-	InitEnemy();
+	//InitEnemy();
 
 	InitScore();
 
@@ -72,7 +72,7 @@ void UninitGame(void)
 {
 	UninitScore();
 
-	UninitEnemy();
+	//UninitEnemy();
 
 	UninitSword();
 	//UninitParticle();
@@ -100,7 +100,7 @@ void UpdateGame(void)
 
 	UpdateSword();
 
-	UpdateEnemy();
+	//UpdateEnemy();
 
 	
 
@@ -152,7 +152,7 @@ void DrawGame0(void)
 
 	DrawSword(); // Kılıcı çiz
 
-	DrawEnemy();
+	//DrawEnemy();
 
 	
 	SetDepthEnable(FALSE);

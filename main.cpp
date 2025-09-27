@@ -22,9 +22,9 @@
 #include "title.h"
 #include "result.h"
 
-#include "imgui.h"
-#include "imgui_impl_win32.h"
-#include "imgui_impl_dx11.h"
+//#include "imgui.h"
+//#include "imgui_impl_win32.h"
+//#include "imgui_impl_dx11.h"
 
 //*****************************************************************************
 // マクロ定義
@@ -187,9 +187,6 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 //=============================================================================
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
-	if (ImGui_ImplWin32_WndProcHandler(hWnd, message, wParam, lParam))
-		return true;
 	// (Your code process Win32 messages)
 	switch(message)
 	{
@@ -224,21 +221,21 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 HRESULT Init(HINSTANCE hInstance, HWND hWnd, BOOL bWindow)
 {
 	InitRenderer(hInstance, hWnd, bWindow);
-
-#ifdef _DEBUG
-	// Setup Dear ImGui context
-	IMGUI_CHECKVERSION();
-	ImGui::CreateContext();
-	ImGuiIO& io = ImGui::GetIO();
-	io.Fonts->AddFontFromFileTTF(u8"c:\\Windows\\Fonts\\meiryo.ttc", 18.0f, nullptr, io.Fonts->GetGlyphRangesJapanese());    // 日本語フォントの指定
-	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-
-
-	// Setup Platform/Renderer backends
-	ImGui_ImplWin32_Init(hWnd);
-	ImGui_ImplDX11_Init(GetDevice(), GetDeviceContext());
-#endif
+//
+//#ifdef _DEBUG
+//	// Setup Dear ImGui context
+//	IMGUI_CHECKVERSION();
+//	ImGui::CreateContext();
+//	ImGuiIO& io = ImGui::GetIO();
+//	io.Fonts->AddFontFromFileTTF(u8"c:\\Windows\\Fonts\\meiryo.ttc", 18.0f, nullptr, io.Fonts->GetGlyphRangesJapanese());    // 日本語フォントの指定
+//	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+//	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+//
+//
+//	// Setup Platform/Renderer backends
+//	ImGui_ImplWin32_Init(hWnd);
+//	ImGui_ImplDX11_Init(GetDevice(), GetDeviceContext());
+//#endif
 
 	InitLight();
 
@@ -268,11 +265,11 @@ void Uninit(void)
 {
 	// 終了のモードをセット
 
-#ifdef _DEBUG
-	ImGui_ImplDX11_Shutdown();
-	ImGui_ImplWin32_Shutdown();
-	ImGui::DestroyContext();
-#endif
+//#ifdef _DEBUG
+//	ImGui_ImplDX11_Shutdown();
+//	ImGui_ImplWin32_Shutdown();
+//	ImGui::DestroyContext();
+//#endif
 
 
 	SetMode(MODE_MAX);
@@ -294,9 +291,9 @@ void Uninit(void)
 //=============================================================================
 void Update(void)
 {
-	ImGui_ImplDX11_NewFrame();
+	/*ImGui_ImplDX11_NewFrame();
 	ImGui_ImplWin32_NewFrame();
-	ImGui::NewFrame();
+	ImGui::NewFrame();*/
 	// 入力の更新処理
 	UpdateInput();
 
@@ -321,43 +318,43 @@ void Update(void)
 	UpdateFade();
 
 
-#ifdef _DEBUG
-	CAMERA* g_camera = GetCamera();
-	PLAYER* g_player = GetPlayer();
-	// (Your code process and dispatch Win32 messages)
-	// Start the Dear ImGui frame
-	if (ImGui::Begin("debugger")) {
-		ImGui::Text(" FPS:%d", g_CountFPS);
-		ImGui::Text("Mouse PosX: %d Mouse PosY : %d", GetMousePosX(), GetMousePosY());
-		ImGui::Text("GAME MODE: %d", g_Mode);
-		ImGui::Text("Player Pos: X: %d Z:%d", g_player[0].pos.x, g_player[0].pos.z);
-		ImGui::Text("Camera Pos: X:%d Y:%d Z:%d", g_camera->pos.x,g_camera->pos.y,g_camera->pos.z);
-		ImGui::Text("Camera Rot: X: %d Z: %d", g_camera->rot.x, g_camera->rot.z);
-
-		if (ImGui::Button("TITLE", ImVec2(120, 40)))
-		{
-			g_Mode = MODE_TITLE;
-		}
-
-		if (ImGui::Button("GAME", ImVec2(120, 40)))
-		{
-			g_Mode = MODE_GAME;
-		}
-
-		if (ImGui::Button("RESULT", ImVec2(120, 40)))
-		{
-			g_Mode = MODE_RESULT;
-		}
-
-		if (ImGui::Button("KILL BUTON", ImVec2(120, 40)))
-		{
-			exit(0);
-		}
-		
-	}
-	ImGui::End();
-
-#endif
+//#ifdef _DEBUG
+//	CAMERA* g_camera = GetCamera();
+//	PLAYER* g_player = GetPlayer();
+//	// (Your code process and dispatch Win32 messages)
+//	// Start the Dear ImGui frame
+//	if (ImGui::Begin("debugger")) {
+//		ImGui::Text(" FPS:%d", g_CountFPS);
+//		ImGui::Text("Mouse PosX: %d Mouse PosY : %d", GetMousePosX(), GetMousePosY());
+//		ImGui::Text("GAME MODE: %d", g_Mode);
+//		ImGui::Text("Player Pos: X: %d Z:%d", g_player[0].pos.x, g_player[0].pos.z);
+//		ImGui::Text("Camera Pos: X:%d Y:%d Z:%d", g_camera->pos.x,g_camera->pos.y,g_camera->pos.z);
+//		ImGui::Text("Camera Rot: X: %d Z: %d", g_camera->rot.x, g_camera->rot.z);
+//
+//		if (ImGui::Button("TITLE", ImVec2(120, 40)))
+//		{
+//			g_Mode = MODE_TITLE;
+//		}
+//
+//		if (ImGui::Button("GAME", ImVec2(120, 40)))
+//		{
+//			g_Mode = MODE_GAME;
+//		}
+//
+//		if (ImGui::Button("RESULT", ImVec2(120, 40)))
+//		{
+//			g_Mode = MODE_RESULT;
+//		}
+//
+//		if (ImGui::Button("KILL BUTON", ImVec2(120, 40)))
+//		{
+//			exit(0);
+//		}
+//		
+//	}
+//	ImGui::End();
+//
+//#endif
 }
 
 //=============================================================================
@@ -430,16 +427,16 @@ void Draw(void)
 
 
 
-#ifdef _DEBUG
-
-	// Rendering
-	// (Your code clears your framebuffer, renders your other stuff etc.)
-	ImGui::Render();
-	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
-	// (Your code calls swapchain's Present() function
-	// デバッグ表示
-	DrawDebugProc();
-#endif
+//#ifdef _DEBUG
+//
+//	// Rendering
+//	// (Your code clears your framebuffer, renders your other stuff etc.)
+//	ImGui::Render();
+//	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+//	// (Your code calls swapchain's Present() function
+//	// デバッグ表示
+//	DrawDebugProc();
+//#endif
 
 	// バックバッファ、フロントバッファ入れ替え
 	Present();

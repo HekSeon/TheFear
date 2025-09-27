@@ -12,7 +12,6 @@
 #include "shadow.h"
 #include "game.h"
 #include "fade.h"
-#include "input.h"
 #include "sound.h"
 #include "player.h"
 #include "collision.h"
@@ -419,4 +418,5 @@ ENEMY *GetEnemy(void)
 	//}
 	return &g_Enemies[0];
 }
+
 

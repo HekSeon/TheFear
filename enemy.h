@@ -7,6 +7,9 @@
 #pragma once
 
 #include "model.h"
+#include <DirectXMath.h>
+using namespace DirectX;
+
 
 
 //*****************************************************************************
@@ -40,6 +43,8 @@ struct ENEMY
     int tblNo;
     int tblMax;
 
+   
+
     float health;
     bool isAlive;
     int targetEnemy;
@@ -60,8 +65,6 @@ void DrawEnemy(void);
 void SpawnEnemy();
 
 ENEMY *GetEnemy(void);
-
-void SetEnemyAttributes(ENEMY& enemy, int tblNo, INTERPOLATION_DATA* moveTbl, int tblSize, float timeStart);
 
 void DealDamageToEnemy();
 ENEMY* FindNearestEnemy(XMFLOAT3 swordPos);
