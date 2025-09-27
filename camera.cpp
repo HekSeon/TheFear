@@ -314,10 +314,6 @@ void ChangeCameraMode(int mode)
 		g_Camera.len = 3.0f;*/
 	}
 
-	// Update player's animation data based on camera mode
-	PLAYER* player = GetPlayer();
-	player->tblNo = (mode == FIRST_PERSON) ? 0 : 1; // Example: 0 for idle, 1 for move
-
 	SetViewPort(g_ViewPortType);
 }
 

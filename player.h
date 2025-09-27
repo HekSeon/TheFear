@@ -1,83 +1,63 @@
-﻿//=============================================================================
-//
-// モデル処理 [player.h]
-// Author : 
-//
-//=============================================================================
-#pragma once
-
+﻿#pragma once
 #include "model.h"
 
+#define MAX_PLAYER        (1)
+#define PLAYER_SIZE       (5.0f)
+#define MODEL_PLAYER      "data/MODEL/bear/body.obj"
+#define MODEL_PLAYER_HEAD "data/MODEL/bear/head.obj"
+#define MODEL_PLAYER_LARM "data/MODEL/bear/leftarm.obj"
+#define MODEL_PLAYER_RARM "data/MODEL/bear/rightarm.obj"
+#define MODEL_PLAYER_LLEG "data/MODEL/bear/leftleg.obj"
+#define MODEL_PLAYER_RLEG "data/MODEL/bear/rightleg.obj"
+#define PLAYER_PARTS_MAX  (5)
 
-//*****************************************************************************
-// マクロ定義
-//*****************************************************************************
-#define MAX_PLAYER		(1)					// プレイヤーの数
+struct INTERPOLATION_DATA; // forward declaration
+struct PLAYER;              // forward declaration, PLAYER_PART içinde pointer kullanmak için
 
-#define	PLAYER_SIZE		(5.0f)				// 当たり判定の大きさ
-
-
-//*****************************************************************************
-// 構造体定義
-//*****************************************************************************
-struct PLAYER
+struct PLAYER_PART
 {
-	XMFLOAT3		pos;		// ポリゴンの位置
-	XMFLOAT3		oldpos;
-	XMFLOAT3		rot;		// ポリゴンの向き(回転)
-	XMFLOAT3		scl;		// ポリゴンの大きさ(スケール)
-
-	XMFLOAT4X4		mtxWorld;	// ワールドマトリックス
-
-	BOOL			load;
-	DX11_MODEL		model;		// モデル情報
-
-	float			spd;		// 移動スピード
-	float			dir;		// 向き
-	float			size;		// 当たり判定の大きさ
-	int				shadowIdx;	// 影のIndex
-	BOOL			use;
-	BOOL			move;
-	BOOL			attack;
-
-	// 階層アニメーション用のメンバー変数
-	float			time;		// 線形補間用
-	int				tblNo;		// 行動データのテーブル番号
-	int				tblMax;		// そのテーブルのデータ数
-
-
-	// 親は、NULL、子供は親のアドレスを入れる(セーブ＆ロードの時は↓ここ気をつける事)
-	PLAYER			*parent;	// 自分が親ならNULL、自分が子供なら親のplayerアドレス
-	int				 currentTblAdr;
-
-	XMFLOAT4			Quaternion;
-
-	XMFLOAT3			UpVector;			// 自分が立っている所
+    DX11_MODEL model;
+    XMFLOAT3 pos;
+    XMFLOAT3 rot;
+    XMFLOAT3 scl;
+    XMFLOAT4X4 mtxWorld;
+    float time;
+    int tblNo;
+    int tblMax;
+    INTERPOLATION_DATA* tbl;
+    BOOL use;
+    BOOL load;
+    PLAYER* parent; // pointer olduğu için forward declaration yeterli
 };
 
+struct PLAYER
+{
+    XMFLOAT3 pos;
+    XMFLOAT3 oldpos;
+    XMFLOAT3 rot;
+    XMFLOAT3 scl;
+    XMFLOAT4X4 mtxWorld;
 
-#define	MODEL_PLAYER		"data/MODEL/bear/body.obj"	// 読み込むモデル名
+    BOOL load;
+    DX11_MODEL model;
+    float spd;
+    float dir;
+    float size;
+    int shadowIdx;
+    BOOL use;
+    BOOL move;
+    BOOL attack;
 
-#define	MODEL_PLAYER_HEAD	"data/MODEL/bear/head.obj"	// 読み込むモデル名
-#define	MODEL_PLAYER_LARM	"data/MODEL/bear/leftarm.obj"	// 読み込むモデル名
-#define	MODEL_PLAYER_RARM	"data/MODEL/bear/rightarm.obj"	// 読み込むモデル名
-#define	MODEL_PLAYER_LLEG	"data/MODEL/bear/leftleg.obj"	// 読み込むモデル名
-#define	MODEL_PLAYER_RLEG	"data/MODEL/bear/rightleg.obj"	// 読み込むモデル名
+    PLAYER_PART parts[PLAYER_PARTS_MAX];
 
-#define PLAYER_PARTS_MAX	(5)								// プレイヤーのパーツの数
+    int currentTblAdr;
+    XMFLOAT4 Quaternion;
+    XMFLOAT3 UpVector;
+};
 
-//*****************************************************************************
-// プロトタイプ宣言
-//*****************************************************************************
+// Prototipler
 HRESULT InitPlayer(void);
 void UninitPlayer(void);
 void UpdatePlayer(void);
 void DrawPlayer(void);
-
-PLAYER *GetPlayer(void);
-
-void playtpsanimation(void);
-void playfpsanimation(void);
-
-void playattackanimation(void);
-
+PLAYER* GetPlayer(void);

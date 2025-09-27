@@ -60,7 +60,7 @@ using namespace DirectX;
 #define	MAP_RIGHT		(MAP_W/2)
 
 // 補間用のデータ構造体を定義
-struct INTERPOLATION_DATA
+struct INTERPOLATION_DATA0
 {
 	XMFLOAT3	pos;		// 頂点座標
 	XMFLOAT3	rot;		// 回転
