@@ -1,12 +1,88 @@
 {
   "Version": 1,
   "WorkspaceRootPath": "C:\\Users\\ths40848\\Desktop\\Github\\TheFear\\",
-  "Documents": [],
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{886725B4-11FC-4A4D-938B-77BD4ECC6D0C}|thefear.vcxproj|C:\\Users\\ths40848\\Desktop\\Github\\TheFear\\skydome.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{886725B4-11FC-4A4D-938B-77BD4ECC6D0C}|thefear.vcxproj|solutionrelative:skydome.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{886725B4-11FC-4A4D-938B-77BD4ECC6D0C}|thefear.vcxproj|C:\\Users\\ths40848\\Desktop\\Github\\TheFear\\player.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{886725B4-11FC-4A4D-938B-77BD4ECC6D0C}|thefear.vcxproj|solutionrelative:player.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{886725B4-11FC-4A4D-938B-77BD4ECC6D0C}|thefear.vcxproj|C:\\Users\\ths40848\\Desktop\\Github\\TheFear\\light.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{886725B4-11FC-4A4D-938B-77BD4ECC6D0C}|thefear.vcxproj|solutionrelative:light.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{886725B4-11FC-4A4D-938B-77BD4ECC6D0C}|thefear.vcxproj|C:\\Users\\ths40848\\Desktop\\Github\\TheFear\\camera.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{886725B4-11FC-4A4D-938B-77BD4ECC6D0C}|thefear.vcxproj|solutionrelative:camera.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    }
+  ],
   "DocumentGroupContainers": [
     {
       "Orientation": 0,
       "VerticalTabListWidth": 256,
-      "DocumentGroups": []
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 3,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "light.cpp",
+              "DocumentMoniker": "C:\\Users\\ths40848\\Desktop\\Github\\TheFear\\light.cpp",
+              "RelativeDocumentMoniker": "light.cpp",
+              "ToolTip": "C:\\Users\\ths40848\\Desktop\\Github\\TheFear\\light.cpp",
+              "RelativeToolTip": "light.cpp",
+              "ViewState": "AgIAACoAAAAAAAAAAAAywDQAAAAoAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2025-09-30T08:17:54.129Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "player.cpp",
+              "DocumentMoniker": "C:\\Users\\ths40848\\Desktop\\Github\\TheFear\\player.cpp",
+              "RelativeDocumentMoniker": "player.cpp",
+              "ToolTip": "C:\\Users\\ths40848\\Desktop\\Github\\TheFear\\player.cpp",
+              "RelativeToolTip": "player.cpp",
+              "ViewState": "AgIAAOsAAAAAAAAAAAAywPYAAAAFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2025-09-30T08:05:40.045Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "camera.cpp",
+              "DocumentMoniker": "C:\\Users\\ths40848\\Desktop\\Github\\TheFear\\camera.cpp",
+              "RelativeDocumentMoniker": "camera.cpp",
+              "ToolTip": "C:\\Users\\ths40848\\Desktop\\Github\\TheFear\\camera.cpp",
+              "RelativeToolTip": "camera.cpp",
+              "ViewState": "AgIAAFcAAAAAAAAAAAAYwF0AAAATAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2025-09-30T08:05:19.505Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "skydome.cpp",
+              "DocumentMoniker": "C:\\Users\\ths40848\\Desktop\\Github\\TheFear\\skydome.cpp",
+              "RelativeDocumentMoniker": "skydome.cpp",
+              "ToolTip": "C:\\Users\\ths40848\\Desktop\\Github\\TheFear\\skydome.cpp",
+              "RelativeToolTip": "skydome.cpp",
+              "ViewState": "AgIAAEEAAAAAAAAAAAAAAEgAAAAeAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2025-09-30T07:57:52.936Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
     }
   ]
 }

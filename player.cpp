@@ -218,6 +218,8 @@ void UpdatePlayer(void)
 
 	g_Player.spd *= 0.5f;
 
+
+
 	// 🟢 ANİMASYON GÜNCELLEME ÇAĞRISI
 	if (g_Player.move)
 		SetPlayerAnimation(&g_Player, ANIM_WALK);

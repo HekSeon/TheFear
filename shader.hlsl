@@ -163,11 +163,9 @@ void PixelShaderPolygon( in  float4 inPosition		: SV_POSITION,
 			{
 				if (Light.Flags[i].x == 1)
 				{
-					lightDir = normalize(Light.Direction[i].xyz);
-					light = dot(lightDir, inNormal.xyz);
-
-					light = 0.5 - 0.5 * light;
-					tempColor = color * Material.Diffuse * light * Light.Diffuse[i];
+					float3 lightDir = normalize(-Light.Direction[i].xyz);
+            float NdotL = max(dot(inNormal.xyz, lightDir), 0.0f);
+            outColor += color * Material.Diffuse * NdotL * Light.Diffuse[i];
 				}
 				else if (Light.Flags[i].x == 2)
 				{
