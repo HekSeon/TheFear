@@ -89,6 +89,16 @@ void UpdateCamera(void)
 	UpdateCameraWithMouse();
 	/*ShowCursor(FALSE);*/
 
+
+// Meshfield yüksekliği (örneğin Y = 0)
+float minHeight = 0.0f;
+
+// Kamera Y'yi sınırla
+if (g_Camera.pos.y < minHeight)
+{
+	g_Camera.pos.y = minHeight;
+}
+
 #ifdef _DEBUG
 
 

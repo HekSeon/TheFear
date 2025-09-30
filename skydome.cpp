@@ -47,7 +47,6 @@ HRESULT InitSkydome(void)
 
 
 
-
 	return S_OK;
 }
 
@@ -69,17 +68,14 @@ void UninitSkydome(void)
 //=============================================================================
 void UpdateSkydome(void)
 {
-    // Skydome genellikle sabittir, ancak döndürmek istersen burada ekleyebilirsin.
-
-	// Point light test
-	LIGHT* light = GetLightData(1);
-
-	light->Position = XMFLOAT3(90.0f, 50.0f, 90.0f);
-	light->Diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-	light->Ambient = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-	light->Type = LIGHT_TYPE_DIRECTIONAL;
-	light->Enable = TRUE;
-	SetLightData(1, light);
+		LIGHT sky;
+		sky.Direction = XMFLOAT3(0.0f, 50.0f, 0.0f);
+		sky.Diffuse = XMFLOAT4(0.4f, 0.5f, 0.7f, 1.0f); // ⬅️ Burayı artır (önce 0.2, 0.3, 0.5 idi)
+		sky.Ambient = XMFLOAT4(1.0f, 1.0f, 1.0f,1.0f);
+		sky.Type = LIGHT_TYPE_DIRECTIONAL;
+		sky.Enable = TRUE;
+		SetLight(1, &sky);
+ 
 }
 
 //=============================================================================
