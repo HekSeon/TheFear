@@ -16,6 +16,8 @@
 #include "enemy.h"
 #include "skydome.h"
 #include "meshfield.h"
+#include "tree.h"
+#include "shadow.h"
 
 #include "debugproc.h"
 
@@ -56,9 +58,14 @@ HRESULT InitGame(void)
 	
 	InitSword();
 
-	//InitEnemy();
+	InitTree();
+
+
+	InitEnemy();
 
 	InitScore();
+
+	//InitShadow();
 
 
 
@@ -70,13 +77,17 @@ HRESULT InitGame(void)
 //=============================================================================
 void UninitGame(void)
 {
+	//UninitShadow();
+
 	UninitScore();
 
-	//UninitEnemy();
+	UninitEnemy();
 
 	UninitSword();
 	//UninitParticle();
 	UninitPlayer();
+
+	UninitTree();
 
 	UninitMeshField();
 
@@ -94,15 +105,18 @@ void UpdateGame(void)
 {
 	UpdateMeshField();
 
+	UpdateTree();
+
 	UpdateSkydome();
 
 	UpdatePlayer();
 
 	UpdateSword();
 
-	//UpdateEnemy();
+	UpdateEnemy();
 
 	
+	//UpdateShadow();
 
 
 #ifdef _DEBUG
@@ -136,6 +150,10 @@ void DrawGame0(void)
 {
 	DrawMeshField();
 
+	DrawTree();
+
+
+
 	DrawSkydome();
 
 	PLAYER* player = GetPlayer();
@@ -144,16 +162,13 @@ void DrawGame0(void)
 	SetCamera();
 	
 
-
 	DrawPlayer();
-
-	// 🎯 **Kılıcı sağ ele bağla**
 	
+	DrawEnemy();
 
-	DrawSword(); // Kılıcı çiz
+	//DrawSword(); 
 
-	//DrawEnemy();
-
+	//DrawShadow();
 	
 	SetDepthEnable(FALSE);
 
@@ -167,7 +182,7 @@ void DrawGame0(void)
 
 	SetDepthEnable(TRUE);
 
-	SetFogEnable(FALSE);
+	SetFogEnable(TRUE);
 }
 
 

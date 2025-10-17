@@ -165,6 +165,7 @@
     <ClInclude Include="sprite.h" />
     <ClInclude Include="sword.h" />
     <ClInclude Include="title.h" />
+    <ClInclude Include="tree.h" />
     <ClInclude Include="UI.h" />
   </ItemGroup>
   <ItemGroup>
@@ -192,6 +193,7 @@
     <ClCompile Include="sprite.cpp" />
     <ClCompile Include="sword.cpp" />
     <ClCompile Include="title.cpp" />
+    <ClCompile Include="tree.cpp" />
     <ClCompile Include="UI.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -1,4 +1,4 @@
-///////////////////////////////////
+Ôªø///////////////////////////////////
 // 
 // light.cpp
 // 
@@ -45,24 +45,26 @@ void InitLight(void)
 		g_Light[i].Ambient = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
 		g_Light[i].Attenuation = 100.0f;	
 		g_Light[i].Type = LIGHT_TYPE_NONE;	
-		g_Light[i].Enable = FALSE;			
+		g_Light[i].Enable = TRUE;			
 		SetLight(i, &g_Light[i]);
 	}
 
-	// ï¿çsåıåπÇÃê›íËÅiê¢äEÇè∆ÇÁÇ∑åıÅj
-	g_Light[0].Direction = XMFLOAT3(0.0f, -1.0f, 0.0f);		
+	// ‰∏¶Ë°åÂÖâÊ∫ê„ÅÆË®≠ÂÆöÔºà‰∏ñÁïå„ÇíÁÖß„Çâ„ÅôÂÖâÔºâ
+	g_Light[0].Direction = XMFLOAT3(0.0f, -0.8f, -0.5f);		
+	g_Light[0].Ambient = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 	g_Light[0].Diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);	
+	g_Light[0].Attenuation = 1000.0f;
 	g_Light[0].Type = LIGHT_TYPE_DIRECTIONAL;					
 	g_Light[0].Enable = TRUE;									
 	SetLight(0, &g_Light[0]);								
 
 
 
-	g_Fog.FogStart = 100.0f;									
+	g_Fog.FogStart = 20.0f;									
 	g_Fog.FogEnd = 250.0f;									
-	g_Fog.FogColor = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);		
+	g_Fog.FogColor = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f); // Skydome rengi gibi
 	SetFog(&g_Fog);
-	SetFogEnable(g_FogEnable);				
+	SetFogEnable(TRUE);				
 
 }
 

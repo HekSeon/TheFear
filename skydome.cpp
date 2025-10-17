@@ -35,7 +35,7 @@ HRESULT InitSkydome(void)
 
 		g_Skydome.pos = XMFLOAT3(0.0f, 0.0f, 0.0f);
 		g_Skydome.rot = XMFLOAT3(0.0f, 0.0f, 0.0f);
-		g_Skydome.scl = XMFLOAT3(1000.0f, 1000.0f, 1000.0f);
+		g_Skydome.scl = XMFLOAT3(500.0f, 500.0f, 500.0f);
 
 		g_Skydome.spd = 0.0f;			// 移動スピードクリア
 
@@ -68,13 +68,13 @@ void UninitSkydome(void)
 //=============================================================================
 void UpdateSkydome(void)
 {
-		LIGHT sky;
+		/*LIGHT sky;
 		sky.Direction = XMFLOAT3(0.0f, 50.0f, 0.0f);
-		sky.Diffuse = XMFLOAT4(0.4f, 0.5f, 0.7f, 1.0f); // ⬅️ Burayı artır (önce 0.2, 0.3, 0.5 idi)
+		sky.Diffuse = XMFLOAT4(0.4f, 0.5f, 0.7f, 1.0f);
 		sky.Ambient = XMFLOAT4(1.0f, 1.0f, 1.0f,1.0f);
 		sky.Type = LIGHT_TYPE_DIRECTIONAL;
 		sky.Enable = TRUE;
-		SetLight(1, &sky);
+		SetLight(1, &sky);*/
  
 }
 
