@@ -1,0 +1,54 @@
+# Visual Studio cache / settings
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Build klasörleri
+x64/
+x86/
+[Oo]bj/
+[Bb]in/
+[Bb]uild/
+[Bb]uilds/
+Debug/
+Release/
+ipch/
+
+# DirectX / SDK build artıkları
+*.pdb
+*.ilk
+*.idb
+*.obj
+*.log
+*.tlog
+*.pch
+*.exp
+*.lib
+*.exe
+*.dll
+
+# Senin özel klasörün
+thefear/
+
+# Paketler / bağımlılıklar
+packages/
+*.nupkg
+*.nuspec
+
+# Temp / cache
+*.tmp
+*.log
+*.cache
+*.db
+*.opendb
+
+# Visual Studio Code
+.vscode/
+
+# Diğer
+Thumbs.db
+Desktop.ini
+*.bak
+*.old
