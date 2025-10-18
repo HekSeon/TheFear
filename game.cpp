@@ -22,6 +22,7 @@
 #include "debugproc.h"
 
 #include "score.h"
+#include "UI.h"
 //*****************************************************************************
 // マクロ定義
 //*****************************************************************************
@@ -40,7 +41,7 @@
 //*****************************************************************************
 static int	g_ViewPortType_Game = TYPE_FULL_SCREEN;
 
-static BOOL	g_bPause = TRUE;	// ポーズON/OFF
+
 
 
 //=============================================================================
@@ -65,6 +66,8 @@ HRESULT InitGame(void)
 
 	InitScore();
 
+	InitUI();
+
 	//InitShadow();
 
 
@@ -78,6 +81,8 @@ HRESULT InitGame(void)
 void UninitGame(void)
 {
 	//UninitShadow();
+
+	UninitUI();
 
 	UninitScore();
 
@@ -114,6 +119,8 @@ void UpdateGame(void)
 	UpdateSword();
 
 	UpdateEnemy();
+
+	UpdateUI();
 
 	
 	//UpdateShadow();
@@ -175,7 +182,7 @@ void DrawGame0(void)
 	
 	SetLightEnable(FALSE);
 
-
+	DrawUI();
 
 //3d yapar
 	SetLightEnable(TRUE);

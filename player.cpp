@@ -15,7 +15,9 @@
 #include "meshfield.h"
 #include "collision.h"
 #include "enemy.h"
+#include "fade.h"
 #include "playeranimation.h"
+#include "game.h"
 
 
 //*****************************************************************************
@@ -73,6 +75,8 @@ HRESULT InitPlayer(void)
 	g_Player.size = PLAYER_SIZE;
 
 	g_Player.use = TRUE;
+
+	g_Player.health = 100.0f;
 
 	// gölge oluştur
 	XMFLOAT3 shPos = g_Player.pos;
@@ -196,12 +200,38 @@ void UpdatePlayer(void)
 	if (GetKeyboardPress(DIK_D) && GetKeyboardPress(DIK_W)) { g_Player.spd = VALUE_MOVE; g_Player.dir = 5 * XM_PI / 4; g_Player.move = TRUE; }
 	if (GetKeyboardPress(DIK_D) && GetKeyboardPress(DIK_S)) { g_Player.spd = VALUE_MOVE; g_Player.dir = 7 * XM_PI / 4; g_Player.move = TRUE; }
 
+	
+
 	// Yükseklik kontrolü
 	XMFLOAT3 HitPosition, Normal;
 	if (RayHitField(g_Player.pos, &HitPosition, &Normal))
 		g_Player.pos.y = HitPosition.y + PLAYER_OFFSET_Y;
 	else
 		g_Player.pos.y = PLAYER_OFFSET_Y;
+
+
+	ENEMY* g_Enemies = GetEnemy();
+	for (int i = 0; i < MAX_ENEMY; i++)
+	{
+		if (CollisionBB(g_Enemies[i].pos, 5.0f, 5.0f, g_Player.pos, 5.0f, 5.0f))
+		{
+			if (IsMouseLeftPressed())
+			{
+
+				if (!g_Enemies[i].isAlive) continue; // Ölü düşmanları atla
+
+				g_Enemies[i].health -= 50;
+
+				if (g_Enemies[i].health <= 0)
+				{
+					g_Enemies[i].health = 0;
+					g_Enemies[i].isAlive = FALSE;
+					g_Enemies[i].use = FALSE;
+				}
+
+			}
+		}
+	}
 
 	// Pozisyon güncelleme
 	if (g_Player.spd > 0.0f)
@@ -217,6 +247,14 @@ void UpdatePlayer(void)
 	SetPositionShadow(g_Player.shadowIdx, pos);
 
 	g_Player.spd *= 0.5f;
+
+	if (g_Player.health <= 0.0f)
+	{
+		g_Player.health = 0.0f;
+		g_Player.use = FALSE;
+		SetFade(FADE_OUT, MODE_RESULT);
+		g_bPause = FALSE;
+	}
 
 
 

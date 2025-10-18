@@ -43,6 +43,7 @@ struct PLAYER
     float spd;
     float dir;
     float size;
+	float health;
     int shadowIdx;
     BOOL use;
     BOOL move;
