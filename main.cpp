@@ -389,6 +389,11 @@ void Draw(void)
 
 	case MODE_GAME:
 		DrawGame();
+
+#ifdef _DEBUG
+		PrintDebugProc("FPS:%d\n", g_CountFPS);
+
+#endif
 		break;
 
 	case MODE_RESULT:
@@ -427,16 +432,9 @@ void Draw(void)
 
 
 
-//#ifdef _DEBUG
-//
-//	// Rendering
-//	// (Your code clears your framebuffer, renders your other stuff etc.)
-//	ImGui::Render();
-//	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
-//	// (Your code calls swapchain's Present() function
-//	// デバッグ表示
-//	DrawDebugProc();
-//#endif
+#ifdef _DEBUG
+	DrawDebugProc();
+#endif
 
 	// バックバッファ、フロントバッファ入れ替え
 	Present();
@@ -491,8 +489,8 @@ void SetMode(int mode)
 			InitGame();
 			break;
 	case MODE_RESULT:
-		InitResult();
 		UninitResult();
+		InitResult();
 		break;
 	case MODE_MAX:
 		

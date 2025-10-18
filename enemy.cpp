@@ -127,20 +127,15 @@ void UninitEnemy(void)
 //=============================================================================
 void UpdateEnemy(void)
 {
+	PLAYER* player = GetPlayer();
+
 	for (int i = 0; i < MAX_ENEMY; i++)
 	{
-		
-		
-		
 
-	// İlk düşmanları sadece bir kez oluştur
-	//if (currentEnemyCount == 0)
-	//{
-	//	for (int i = 0; i < INITIAL_ENEMIES; i++)
-	//	{
-	//		SpawnEnemy();
-	//	}
-	//}
+		if (CollisionBB(g_Enemies[i].pos, 1.f, 1.f, player->pos, 1.f, 1.f))
+		{
+			player->health -= 1; // Oyuncunun sağlığını azal
+		}
 
 	// Zamanlayıcıyı artır
 	spawnTimer++;
@@ -200,27 +195,7 @@ void UpdateEnemy(void)
 			}
 		}
 
-		if (CollisionBB(g_Enemies[i].pos, 5.0f, 5.0f, player->pos, 5.0f, 5.0f))
-		{
-			if (IsMouseLeftPressed())
-			{
-				//for (int i = 0; i < MAX_ENEMY; i++)
-				//{
-					if (!g_Enemies[i].isAlive) continue; // Ölü düşmanları atla
-					BOOL isdetected = FALSE;
-
-					isdetected = TRUE;
-					g_Enemies[i].health -= 50;
-
-					
-				#ifdef _DEBUG
-				PrintDebugProc("deteced: %d \n", isdetected);
-#endif // _DEBUG
-				//}
-
-			}
-			g_Enemies[i].pos = oldPos;
-		}
+		
 	
 
 			// Eğer çarpışma algılandıysa eski pozisyona dön
@@ -339,26 +314,6 @@ void DrawEnemy(void)
 
 	// カリング設定を戻す
 	SetCullingMode(CULL_MODE_BACK);
-}
-
-void DealDamageToEnemy()
-{
-	// 🎯 En yakın düşmanı bul
-	SWORD* swordpos = GetSword();
-	ENEMY* nearestEnemy = FindNearestEnemy(swordpos->pos);
-
-	// Eğer düşman varsa ona hasar ver
-	if (nearestEnemy)
-	{
-		printf("En yakin dusmana hasar verildi!\n");
-		nearestEnemy->health -= 10.0f;
-
-		if (nearestEnemy->health <= 0.0f)
-		{
-			printf("Dusman oldu!\n");
-			nearestEnemy->isAlive = FALSE;
-		}
-	}
 }
 
 

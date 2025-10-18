@@ -10,6 +10,7 @@
 #include "main.h"
 #include "renderer.h"
 #include "sprite.h"
+#include "player.h"
 
 //*****************************************************************************
 // マクロ定義
@@ -41,9 +42,11 @@ static float					g_w, g_h;					// 幅と高さ
 static XMFLOAT3					g_Pos;						// ポリゴンの座標
 static int						g_TexNo;					// テクスチャ番号
 
-static int						g_Score;					// スコア
+static int						g_UI;					// スコア
 
 static BOOL						g_Load = FALSE;
+
+PLAYER* g_player = GetPlayer();
 
 
 /////////////////////////////////////////////////////////
@@ -84,7 +87,7 @@ HRESULT InitUI(void)
 	g_Pos = { 500.0f, 20.0f, 0.0f };
 	g_TexNo = 0;
 
-	g_Score = 0;	// スコアの初期化
+	g_UI = 0;
 
 	g_Load = TRUE;
 	return S_OK;
@@ -114,7 +117,8 @@ void UninitUI(void)
 
 void UpdateUI(void)
 {
-
+	g_UI = g_player->health;	// HPの初期化
+	
 }
 
 void DrawUI(void)
@@ -139,7 +143,7 @@ void DrawUI(void)
 	GetDeviceContext()->PSSetShaderResources(0, 1, &g_Texture[g_TexNo]);
 
 	// 桁数分処理する
-	int number = g_Score;
+	int number = g_UI;
 	for (int i = 0; i < HEALT_DIGIT; i++)
 	{
 		// 今回表示する桁の数字
@@ -170,5 +174,5 @@ void DrawUI(void)
 
 int GetUI(void)
 {
-	return g_Score;
+	return g_UI;
 }

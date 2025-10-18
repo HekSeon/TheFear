@@ -81,7 +81,6 @@ HRESULT InitResult(void)
 	g_Use   = TRUE;
 	g_w     = TEXTURE_WIDTH;
 	g_h     = TEXTURE_HEIGHT;
-	g_Pos   = { g_w / 2, 50.0f, 0.0f };
 	g_TexNo = 0;
 
 
