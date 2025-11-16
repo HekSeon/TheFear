@@ -127,6 +127,7 @@
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>false</ConformanceMode>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <AdditionalIncludeDirectories>$(ProjectDir)Source\Private;$(ProjectDir)Source\Public;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -134,16 +135,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="camera.h" />
-    <ClInclude Include="collision.h" />
-    <ClInclude Include="playeranimation.h" />
-    <ClInclude Include="result.h" />
-    <ClInclude Include="score.h" />
-    <ClInclude Include="skydome.h" />
-    <ClInclude Include="debugproc.h" />
-    <ClInclude Include="enemy.h" />
-    <ClInclude Include="fade.h" />
-    <ClInclude Include="game.h" />
     <ClInclude Include="imgui.h" />
     <ClInclude Include="imgui_impl_dx11.h" />
     <ClInclude Include="imgui_impl_win32.h" />
@@ -151,50 +142,64 @@
     <ClInclude Include="imstb_rectpack.h" />
     <ClInclude Include="imstb_textedit.h" />
     <ClInclude Include="imstb_truetype.h" />
-    <ClInclude Include="input.h" />
-    <ClInclude Include="light.h" />
-    <ClInclude Include="main.h" />
-    <ClInclude Include="meshfield.h" />
-    <ClInclude Include="meshwall.h" />
-    <ClInclude Include="model.h" />
-    <ClInclude Include="particle.h" />
-    <ClInclude Include="player.h" />
-    <ClInclude Include="renderer.h" />
-    <ClInclude Include="shadow.h" />
-    <ClInclude Include="sound.h" />
-    <ClInclude Include="sprite.h" />
-    <ClInclude Include="sword.h" />
-    <ClInclude Include="title.h" />
-    <ClInclude Include="tree.h" />
-    <ClInclude Include="UI.h" />
+    <ClInclude Include="Source\Public\camera.h" />
+    <ClInclude Include="Source\Public\collision.h" />
+    <ClInclude Include="Source\Public\debugproc.h" />
+    <ClInclude Include="Source\Public\enemy.h" />
+    <ClInclude Include="Source\Public\fade.h" />
+    <ClInclude Include="Source\Public\game.h" />
+    <ClInclude Include="Source\Public\imgui.h" />
+    <ClInclude Include="Source\Public\input.h" />
+    <ClInclude Include="Source\Public\light.h" />
+    <ClInclude Include="Source\Public\main.h" />
+    <ClInclude Include="Source\Public\meshfield.h" />
+    <ClInclude Include="Source\Public\meshwall.h" />
+    <ClInclude Include="Source\Public\model.h" />
+    <ClInclude Include="Source\Public\particle.h" />
+    <ClInclude Include="Source\Public\player.h" />
+    <ClInclude Include="Source\Public\playeranimation.h" />
+    <ClInclude Include="Source\Public\renderer.h" />
+    <ClInclude Include="Source\Public\result.h" />
+    <ClInclude Include="Source\Public\score.h" />
+    <ClInclude Include="Source\Public\shadow.h" />
+    <ClInclude Include="Source\Public\skydome.h" />
+    <ClInclude Include="Source\Public\sound.h" />
+    <ClInclude Include="Source\Public\sprite.h" />
+    <ClInclude Include="Source\Public\sword.h" />
+    <ClInclude Include="Source\Public\title.h" />
+    <ClInclude Include="Source\Public\tree.h" />
+    <ClInclude Include="Source\Public\UI.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="camera.cpp" />
-    <ClCompile Include="collision.cpp" />
-    <ClCompile Include="playeranimation.cpp" />
-    <ClCompile Include="result.cpp" />
-    <ClCompile Include="score.cpp" />
-    <ClCompile Include="skydome.cpp" />
-    <ClCompile Include="debugproc.cpp" />
-    <ClCompile Include="enemy.cpp" />
-    <ClCompile Include="fade.cpp" />
-    <ClCompile Include="game.cpp" />
-    <ClCompile Include="input.cpp" />
-    <ClCompile Include="light.cpp" />
-    <ClCompile Include="main.cpp" />
-    <ClCompile Include="meshfield.cpp" />
-    <ClCompile Include="meshwall.cpp" />
-    <ClCompile Include="model.cpp" />
-    <ClCompile Include="particle.cpp" />
-    <ClCompile Include="player.cpp" />
-    <ClCompile Include="renderer.cpp" />
-    <ClCompile Include="shadow.cpp" />
-    <ClCompile Include="sound.cpp" />
-    <ClCompile Include="sprite.cpp" />
-    <ClCompile Include="sword.cpp" />
-    <ClCompile Include="title.cpp" />
-    <ClCompile Include="tree.cpp" />
-    <ClCompile Include="UI.cpp" />
+    <ClCompile Include="Source\Private\camera.cpp" />
+    <ClCompile Include="Source\Private\collision.cpp" />
+    <ClCompile Include="Source\Private\debugproc.cpp" />
+    <ClCompile Include="Source\Private\enemy.cpp" />
+    <ClCompile Include="Source\Private\fade.cpp" />
+    <ClCompile Include="Source\Private\game.cpp" />
+    <ClCompile Include="Source\Private\imgui.cpp" />
+    <ClCompile Include="Source\Private\imgui_demo.cpp" />
+    <ClCompile Include="Source\Private\imgui_draw.cpp" />
+    <ClCompile Include="Source\Private\input.cpp" />
+    <ClCompile Include="Source\Private\light.cpp" />
+    <ClCompile Include="Source\Private\main.cpp" />
+    <ClCompile Include="Source\Private\meshfield.cpp" />
+    <ClCompile Include="Source\Private\meshwall.cpp" />
+    <ClCompile Include="Source\Private\model.cpp" />
+    <ClCompile Include="Source\Private\particle.cpp" />
+    <ClCompile Include="Source\Private\player.cpp" />
+    <ClCompile Include="Source\Private\playeranimation.cpp" />
+    <ClCompile Include="Source\Private\renderer.cpp" />
+    <ClCompile Include="Source\Private\result.cpp" />
+    <ClCompile Include="Source\Private\score.cpp" />
+    <ClCompile Include="Source\Private\shadow.cpp" />
+    <ClCompile Include="Source\Private\skydome.cpp" />
+    <ClCompile Include="Source\Private\sound.cpp" />
+    <ClCompile Include="Source\Private\sprite.cpp" />
+    <ClCompile Include="Source\Private\sword.cpp" />
+    <ClCompile Include="Source\Private\title.cpp" />
+    <ClCompile Include="Source\Private\tree.cpp" />
+    <ClCompile Include="Source\Private\UI.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
