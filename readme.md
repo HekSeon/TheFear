@@ -163,6 +163,8 @@ TheFear/
 
 git clone https://github.com/HekSeon/TheFear.git
 
+/
+
 Visual Studioで TheFear.sln を開く
 
 
