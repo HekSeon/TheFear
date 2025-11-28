@@ -1,12 +1,12 @@
-<h1 align="center">🎮 TheFear — DX11 C++ ゲーム</h1>
+<h1 align="center">🎮 TheFear — DX11 3D C++ ゲーム</h1>
 
 
 
 <p align="center">
 
-\&nbsp; <b>C++・DirectX11・HLSL / 個人制作プロジェクト</b><br>
+<b>C++・DirectX11・HLSL / 個人制作プロジェクト</b><br>
 
-\&nbsp; 低レベルグラフィック × ゲームロジック × 手動エンジン構造
+低レベルグラフィック × ゲームロジック × 手動エンジン構造
 
 </p>
 
@@ -14,13 +14,9 @@
 
 <p align="center">
 
-\&nbsp; <img src="https://img.shields.io/badge/言語-C++-00599C?logo=c%2B%2B\&style=for-the-badge">
-
-\&nbsp; <img src="https://img.shields.io/badge/グラフィック-DirectX11-239120?style=for-the-badge">
-
-\&nbsp; <img src="https://img.shields.io/badge/プラットフォーム-PC-blue?style=for-the-badge">
-
-\&nbsp; <img src="https://img.shields.io/badge/ステータス-アクティブ-success?style=for-the-badge">
+<img src="https://img.shields.io/badge/言語-C++-00599C?logo=c%2B%2B\&style=for-the-badge">	<img src="https://img.shields.io/badge/グラフィック-DirectX11-239120?style=for-the-badge">
+<img src="https://img.shields.io/badge/プラットフォーム-PC-blue?style=for-the-badge">
+<img src="https://img.shields.io/badge/ステータス-アクティブ-success?style=for-the-badge">
 
 </p>
 
