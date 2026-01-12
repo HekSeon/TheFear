@@ -149,7 +149,7 @@ void UninitTitle(void)
 //=============================================================================
 void UpdateTitle(void)
 {
-	g_ElapsedTime += 1;  // Zamanı arttır
+	g_ElapsedTime += 1; 
 
 
 
@@ -159,21 +159,21 @@ void UpdateTitle(void)
 
 		g_CurrentState = 0;
 
-		if (g_ElapsedTime >= 300.0f)  // 2 saniye geçtikten sonra
+		if (g_ElapsedTime >= 300.0f)  
 		{
 			
 			g_ElapsedTime = 0.0f;
-			g_CurrentState = 1;// İkinci resim geçişi başlasın
+			g_CurrentState = 1;
 		}
 		break;
 	case 1:
 		g_CurrentState = 1;
 
-		if (g_ElapsedTime >= 50.0f)  // 2 saniye geçtikten sonra
+		if (g_ElapsedTime >= 50.0f)  
 		{
 			
 			g_ElapsedTime = 0.0f;
-			g_CurrentState = 0;// İkinci resim geçişi başlasın
+			g_CurrentState = 0;
 		}
 
 	default:
@@ -183,7 +183,7 @@ void UpdateTitle(void)
 	
 
 
-	// Enter tuşuna basıldığında sahne geçişi
+	
 	if (GetKeyboardTrigger(DIK_RETURN))
 	{
 		SetFade(FADE_OUT, MODE_GAME);
@@ -197,7 +197,7 @@ void UpdateTitle(void)
 		SetFade(FADE_OUT, MODE_GAME);
 	}
 
-	// Diğer animasyon ve işlemler (alpha değişimi vb.)
+	
 	if (flag_alpha == TRUE)
 	{
 		alpha -= 0.02f;
@@ -242,10 +242,6 @@ void DrawTitle(void)
 	SetMaterial(material);
 
 	// タイトルの背景を描画
-
-	// Yıldırım efekti sırasında ekranın tamamını veya belirli bir kısmını parlat
-
-	// Normal ekran görüntüsünü çiz (yıldırım sonrası)
 	GetDeviceContext()->PSSetShaderResources(0, 1, &g_Texture[g_CurrentState]);
 	SetSprite(g_VertexBuffer, g_Pos.x, g_Pos.y, g_w, g_h, 0.0f, 0.0f, 1.0f, 1.0f);
 	GetDeviceContext()->Draw(4, 0);

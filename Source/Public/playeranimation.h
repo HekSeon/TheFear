@@ -1,8 +1,21 @@
-﻿#pragma once
+﻿//============================================================================
+//
+// BAYAR SEMIH
+// 
+// 
+// playeranimation.h
+// 
+//============================================================================
+
+
+
+
+#pragma once
 
 #include <DirectXMath.h>
 using namespace DirectX;
 
+//============================================================================
 
 enum PLAYER_ANIM
 {
@@ -11,6 +24,7 @@ enum PLAYER_ANIM
     ANIM_ATTACK
 };
 
+//============================================================================
 
 struct INTERPOLATION_DATA
 {
@@ -20,7 +34,8 @@ struct INTERPOLATION_DATA
     int frame;
 };
 
-
+//============================================================================
+// PLAYER構造体のパーツ用構造体
 void InitPlayerAnimation(PLAYER* player);
 void UpdatePlayerAnimation(PLAYER* player);
 
