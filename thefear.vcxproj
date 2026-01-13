@@ -135,20 +135,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="imgui.h" />
-    <ClInclude Include="imgui_impl_dx11.h" />
-    <ClInclude Include="imgui_impl_win32.h" />
-    <ClInclude Include="imgui_internal.h" />
-    <ClInclude Include="imstb_rectpack.h" />
-    <ClInclude Include="imstb_textedit.h" />
-    <ClInclude Include="imstb_truetype.h" />
     <ClInclude Include="Source\Public\camera.h" />
     <ClInclude Include="Source\Public\collision.h" />
     <ClInclude Include="Source\Public\debugproc.h" />
     <ClInclude Include="Source\Public\enemy.h" />
     <ClInclude Include="Source\Public\fade.h" />
     <ClInclude Include="Source\Public\game.h" />
-    <ClInclude Include="Source\Public\imgui.h" />
     <ClInclude Include="Source\Public\input.h" />
     <ClInclude Include="Source\Public\light.h" />
     <ClInclude Include="Source\Public\main.h" />
@@ -177,9 +169,6 @@
     <ClCompile Include="Source\Private\enemy.cpp" />
     <ClCompile Include="Source\Private\fade.cpp" />
     <ClCompile Include="Source\Private\game.cpp" />
-    <ClCompile Include="Source\Private\imgui.cpp" />
-    <ClCompile Include="Source\Private\imgui_demo.cpp" />
-    <ClCompile Include="Source\Private\imgui_draw.cpp" />
     <ClCompile Include="Source\Private\input.cpp" />
     <ClCompile Include="Source\Private\light.cpp" />
     <ClCompile Include="Source\Private\main.cpp" />

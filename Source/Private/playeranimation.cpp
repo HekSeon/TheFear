@@ -1,14 +1,18 @@
-﻿#include "player.h"
+﻿//=================================================================
+// BAYAR SEMIH
+// 
+// playeranimation.cpp
+// 
+//=================================================================
+
+#include "player.h"
 #include "PlayerAnimation.h"
 #include <DirectXMath.h>
 using namespace DirectX;
 
-//=================================================================
-// Player.cpp'teki move/idle tablolarını buraya taşıyoruz
-//=================================================================
 static PLAYER_ANIM currentAnim = ANIM_IDLE;
 
-// Idle tablolar
+// IDLEアニメーションのテーブル
 // pos          rot         scl         frame
 static INTERPOLATION_DATA idle_tbl_head[] = {
     { {0,0,0}, {0,0,0}, {1,1,1}, 30 },
@@ -36,7 +40,7 @@ static INTERPOLATION_DATA idle_tbl_rleg[] = {
     { {0,0,0}, {0,0,0}, {1,1,1}, 30 },
 };
 
-// Move tablolar
+// 歩くアニメーションのテーブル
 static INTERPOLATION_DATA move_tbl_head[] = {
     { {0,0,0}, {0,0,0}, {1,1,1}, 30 },
     { {0,0.1f,0}, {0,0,0}, {1,1.05f,1}, 60 },
@@ -63,7 +67,7 @@ static INTERPOLATION_DATA move_tbl_rleg[] = {
     { {0,0,0}, {-XM_PI / 9,0,0}, {1,1,1}, 30 },
 };
 
-// Tablo adresleri
+
 static INTERPOLATION_DATA* g_IdleTblAdr[] = {
     idle_tbl_head, idle_tbl_larm, idle_tbl_rarm, idle_tbl_lleg, idle_tbl_rleg
 };
@@ -73,7 +77,7 @@ static INTERPOLATION_DATA* g_MoveTblAdr[] = {
 };
 
 //=================================================================
-// Animasyon yönetimi
+// アニメション処理
 //=================================================================
 void InitPlayerAnimation(PLAYER* player)
 {

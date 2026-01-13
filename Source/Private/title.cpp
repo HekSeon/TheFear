@@ -1,10 +1,4 @@
-﻿//=============================================================================
-//
-// タイトル画面処理 [title.cpp]
-// Author : 
-//
-//=============================================================================
-#include "main.h"
+﻿#include "main.h"
 #include "renderer.h"
 #include "input.h"
 #include "fade.h"
@@ -15,106 +9,63 @@
 //*****************************************************************************
 // マクロ定義
 //*****************************************************************************
-#define TEXTURE_WIDTH				(SCREEN_WIDTH)	// 背景サイズ
-#define TEXTURE_HEIGHT				(SCREEN_HEIGHT)	// 
-#define TEXTURE_MAX					(3)				// テクスチャの数
-
-#define TEXTURE_WIDTH_LOGO			(480)			// ロゴサイズ
-#define TEXTURE_HEIGHT_LOGO			(80)			// 
-#define SWITCH_TEXTURE_TIME (5.0f) // 第二のテクスチャへの切り替え時間
-#define LIGHTNING_DURATION (0.5f) // 雷エフェクトの長さ
-
-
-
-
-//*****************************************************************************
-// プロトタイプ宣言
-//*****************************************************************************
-
+#define TEXTURE_WIDTH         (SCREEN_WIDTH)    // 背景サイズ：幅
+#define TEXTURE_HEIGHT        (SCREEN_HEIGHT)   // 背景サイズ：高さ
+#define TEXTURE_MAX           (6)               // テクスチャの最大数
 
 //*****************************************************************************
 // グローバル変数
 //*****************************************************************************
-static ID3D11Buffer				*g_VertexBuffer = NULL;		// 頂点情報
-static ID3D11ShaderResourceView	*g_Texture[TEXTURE_MAX] = { NULL };	// テクスチャ情報
+static ID3D11Buffer* g_VertexBuffer = NULL;                // 頂点バッファ
+static ID3D11ShaderResourceView* g_Texture[TEXTURE_MAX] = { NULL };    // テクスチャリソース
 
-static char *g_TexturName[TEXTURE_MAX] = {
-	"data/TEXTURE/bg1.jpg",
-	"data/TEXTURE/bg2.jpg",
-	"data/TEXTURE/titlelogo.png",
+// テクスチャファイルパス一覧
+static char* g_TexturName[TEXTURE_MAX] = {
+    "data/TEXTURE/bg1.jpg",        // 0: 背景1 (通常)
+    "data/TEXTURE/bg.jpg",        // 1: 背景2 (雷エフェクト等)
+    "data/TEXTURE/titlelogo.png",  // 2: タイトルロゴ
+    "data/TEXTURE/start.png",      // 3: スタートボタン
+    "data/TEXTURE/quit.png",       // 4: 終了ボタン
+	"data/TEXTURE/pointer.png",       // 5: pointer
 };
 
-
-static BOOL						g_Use;						// TRUE:使っている  FALSE:未使用
-static float					g_w, g_h;					// 幅と高さ
-static XMFLOAT3					g_Pos;						// ポリゴンの座標
-static int						g_TexNo;					// テクスチャ番号
-
-static float                    g_ElapsedTime = 0.0f;
-
-static LARGE_INTEGER g_LastTime = { 0 };
-static LARGE_INTEGER g_Frequency = { 0 };
-static float g_DeltaTime = 0.0f;
-
-static int g_CurrentState = 0;
-
-// Görselleri ve efektleri tutan değişkenler
-static ID3D11ShaderResourceView* g_FirstImageTexture = NULL;  // İlk resim
-static ID3D11ShaderResourceView* g_SecondImageTexture = NULL; // İkinci resim
-
-float	alpha;
-BOOL	flag_alpha;
-
-static BOOL						g_Load = FALSE;
-
+static int   g_CurrentBG = 0;       // 現在表示中の背景番号
+static float g_ElapsedTime = 0.0f;  // 経過時間カウント
+static int   g_MenuSelect = 0;      // 現在のメニュー選択インデックス (0:Start, 1:Help, 2:Quit)
+static float g_Alpha = 1.0f;        // 点滅用アルファ値
+static BOOL  g_AlphaFlag = TRUE;    // アルファ値増減フラグ
+static BOOL  g_Load = FALSE;        // ロード済みフラグ
 
 //=============================================================================
 // 初期化処理
 //=============================================================================
 HRESULT InitTitle(void)
 {
-	ID3D11Device *pDevice = GetDevice();
+    ID3D11Device* pDevice = GetDevice();
 
-	//テクスチャ生成
-	for (int i = 0; i < TEXTURE_MAX; i++)
-	{
-		g_Texture[i] = NULL;
-		D3DX11CreateShaderResourceViewFromFile(GetDevice(),
-			g_TexturName[i],
-			NULL,
-			NULL,
-			&g_Texture[i],
-			NULL);
-	}
+    // テクスチャの読み込み
+    for (int i = 0; i < TEXTURE_MAX; i++)
+    {
+        D3DX11CreateShaderResourceViewFromFile(GetDevice(),
+            g_TexturName[i], NULL, NULL, &g_Texture[i], NULL);
+    }
 
+    // 頂点バッファの作成
+    D3D11_BUFFER_DESC bd;
+    ZeroMemory(&bd, sizeof(bd));
+    bd.Usage = D3D11_USAGE_DYNAMIC;
+    bd.ByteWidth = sizeof(VERTEX_3D) * 4;
+    bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+    bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+    GetDevice()->CreateBuffer(&bd, NULL, &g_VertexBuffer);
 
+    // 変数の初期化
+    g_ElapsedTime = 0.0f;
+    g_MenuSelect = 0;
+    g_Alpha = 1.0f;
+    g_Load = TRUE;
 
-	// 頂点バッファ生成
-	D3D11_BUFFER_DESC bd;
-	ZeroMemory(&bd, sizeof(bd));
-	bd.Usage = D3D11_USAGE_DYNAMIC;
-	bd.ByteWidth = sizeof(VERTEX_3D) * 4;
-	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	GetDevice()->CreateBuffer(&bd, NULL, &g_VertexBuffer);
-
-
-	// 変数の初期化
-	g_Use   = TRUE;
-	g_w     = TEXTURE_WIDTH;
-	g_h     = TEXTURE_HEIGHT;
-	g_Pos   = XMFLOAT3(g_w/2, g_h/2, 0.0f);
-	g_TexNo = 0;
-
-	alpha = 1.0f;
-	flag_alpha = TRUE;
-
-	g_ElapsedTime = 0.0f;
-
-	// BGM再生
-
-	g_Load = TRUE;
-	return S_OK;
+    return S_OK;
 }
 
 //=============================================================================
@@ -122,26 +73,26 @@ HRESULT InitTitle(void)
 //=============================================================================
 void UninitTitle(void)
 {
-	if (g_Load == FALSE) return;
+    if (g_Load == FALSE) return;
 
-	if (g_VertexBuffer)
-	{
-		g_VertexBuffer->Release();
-		g_VertexBuffer = NULL;
-	}
+    // 頂点バッファの解放
+    if (g_VertexBuffer)
+    {
+        g_VertexBuffer->Release();
+        g_VertexBuffer = NULL;
+    }
 
-	for (int i = 0; i < TEXTURE_MAX; i++)
-	{
-		if (g_Texture[i])
-		{
-			g_Texture[i]->Release();
-			g_Texture[i] = NULL;
-		}
-	}
+    // テクスチャの解放
+    for (int i = 0; i < TEXTURE_MAX; i++)
+    {
+        if (g_Texture[i])
+        {
+            g_Texture[i]->Release();
+            g_Texture[i] = NULL;
+        }
+    }
 
-	g_ElapsedTime = 0.0f;
-
-	g_Load = FALSE;
+    g_Load = FALSE;
 }
 
 //=============================================================================
@@ -149,73 +100,54 @@ void UninitTitle(void)
 //=============================================================================
 void UpdateTitle(void)
 {
-	g_ElapsedTime += 1; 
+    // --- 背景切り替えアニメーション ---
+    g_ElapsedTime += 1.0f;
+    if (g_CurrentBG == 0 && g_ElapsedTime >= 300.0f)
+    {
+        g_CurrentBG = 1; // 雷背景へ
+        g_ElapsedTime = 0.0f;
+    }
+    else if (g_CurrentBG == 1 && g_ElapsedTime >= 50.0f)
+    {
+        g_CurrentBG = 0; // 通常背景へ戻す
+        g_ElapsedTime = 0.0f;
+    }
 
+    // --- メニュー選択の入力制御 ---
+    if (GetKeyboardTrigger(DIK_DOWN) || GetKeyboardTrigger(DIK_S))
+    {
+        g_MenuSelect = (g_MenuSelect + 1) % 2; // 下へ移動
+    }
+    else if (GetKeyboardTrigger(DIK_UP) || GetKeyboardTrigger(DIK_W))
+    {
+        g_MenuSelect = (g_MenuSelect + 2) % 2; // 上へ移動
+    }
 
+    // --- 決定操作 ---
+    if (GetKeyboardTrigger(DIK_RETURN))
+    {
+        switch (g_MenuSelect)
+        {
+        case 0: // スタート
+            SetFade(FADE_OUT, MODE_GAME);
+            break;
+        case 1: // 終了
+            exit(0);
+            break;
+        }
+    }
 
-	switch (g_CurrentState)
-	{
-	case 0:
-
-		g_CurrentState = 0;
-
-		if (g_ElapsedTime >= 300.0f)  
-		{
-			
-			g_ElapsedTime = 0.0f;
-			g_CurrentState = 1;
-		}
-		break;
-	case 1:
-		g_CurrentState = 1;
-
-		if (g_ElapsedTime >= 50.0f)  
-		{
-			
-			g_ElapsedTime = 0.0f;
-			g_CurrentState = 0;
-		}
-
-	default:
-		break;
-
-	}
-	
-
-
-	
-	if (GetKeyboardTrigger(DIK_RETURN))
-	{
-		SetFade(FADE_OUT, MODE_GAME);
-	}
-	else if (IsButtonTriggered(0, BUTTON_START))
-	{
-		SetFade(FADE_OUT, MODE_GAME);
-	}
-	else if (IsButtonTriggered(0, BUTTON_B))
-	{
-		SetFade(FADE_OUT, MODE_GAME);
-	}
-
-	
-	if (flag_alpha == TRUE)
-	{
-		alpha -= 0.02f;
-		if (alpha <= 0.0f)
-		{
-			alpha = 0.0f;
-			flag_alpha = FALSE;
-		}
-	}
-	else
-	{
-		alpha += 0.02f;
-		if (alpha >= 1.0f)
-		{
-			alpha = 1.0f;
-			flag_alpha = TRUE;
-		}
-	}
+    // --- ロゴの点滅（アルファアニメーション） ---
+    if (g_AlphaFlag)
+    {
+        g_Alpha -= 0.02f;
+        if (g_Alpha <= 0.5f) g_AlphaFlag = FALSE;
+    }
+    else
+    {
+        g_Alpha += 0.02f;
+        if (g_Alpha >= 1.0f) g_AlphaFlag = TRUE;
+    }
 }
 
 //=============================================================================
@@ -223,65 +155,45 @@ void UpdateTitle(void)
 //=============================================================================
 void DrawTitle(void)
 {
+    // 頂点バッファの設定
+    UINT stride = sizeof(VERTEX_3D);
+    UINT offset = 0;
+    GetDeviceContext()->IASetVertexBuffers(0, 1, &g_VertexBuffer, &stride, &offset);
 
-	// 頂点バッファ設定
-	UINT stride = sizeof(VERTEX_3D);
-	UINT offset = 0;
-	GetDeviceContext()->IASetVertexBuffers(0, 1, &g_VertexBuffer, &stride, &offset);
+    // 2D描画用マトリクス設定
+    SetWorldViewProjection2D();
+    GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 
-	// マトリクス設定
-	SetWorldViewProjection2D();
+    // --- 1. 背景の描画 ---
+    GetDeviceContext()->PSSetShaderResources(0, 1, &g_Texture[g_CurrentBG]);
+    SetSprite(g_VertexBuffer, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 1, 1);
+    GetDeviceContext()->Draw(4, 0);
 
-	// プリミティブトポロジ設定
-	GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+    // --- 2. タイトルロゴの描画 (点滅効果付き) ---
+    GetDeviceContext()->PSSetShaderResources(0, 1, &g_Texture[2]);
+    SetSpriteColor(g_VertexBuffer, SCREEN_WIDTH / 2, 200, 480, 80, 0, 0, 1, 1, XMFLOAT4(1, 1, 1, g_Alpha));
+    GetDeviceContext()->Draw(4, 0);
 
-	// マテリアル設定
-	MATERIAL material;
-	ZeroMemory(&material, sizeof(material));
-	material.Diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-	SetMaterial(material);
+    // --- 3. メニューボタンの描画 (選択中のみ強調表示) ---
+    float menuX = SCREEN_WIDTH / 2;
 
-	// タイトルの背景を描画
-	GetDeviceContext()->PSSetShaderResources(0, 1, &g_Texture[g_CurrentState]);
-	SetSprite(g_VertexBuffer, g_Pos.x, g_Pos.y, g_w, g_h, 0.0f, 0.0f, 1.0f, 1.0f);
-	GetDeviceContext()->Draw(4, 0);
+    // ゲーム開始ボタン
+    GetDeviceContext()->PSSetShaderResources(0, 1, &g_Texture[3]);
+    SetSpriteColor(g_VertexBuffer, menuX, 500, 240, 60, 0, 0, 1, 1,
+        XMFLOAT4(1, 1, 1, (g_MenuSelect == 0 ? 1.0f : 0.4f)));
+    GetDeviceContext()->Draw(4, 0);
+
+    // ヘルプボタン
+    GetDeviceContext()->PSSetShaderResources(0, 1, &g_Texture[4]);
+    SetSpriteColor(g_VertexBuffer, menuX, 600, 240, 60, 0, 0, 1, 1,
+        XMFLOAT4(1, 1, 1, (g_MenuSelect == 1 ? 1.0f : 0.4f)));
+    GetDeviceContext()->Draw(4, 0);
 
 
-	// タイトルの
-	{
-		// テクスチャ設定
-		GetDeviceContext()->PSSetShaderResources(0, 1, &g_Texture[2]);
-
-		// １枚のポリゴンの頂点とテクスチャ座標を設定
-	//	SetSprite(g_VertexBuffer, g_Pos.x, g_Pos.y, TEXTURE_WIDTH_LOGO, TEXTURE_HEIGHT_LOGO, 0.0f, 0.0f, 1.0f, 1.0f);
-		SetSpriteColor(g_VertexBuffer, 250, 150, TEXTURE_WIDTH_LOGO, TEXTURE_HEIGHT_LOGO, 0.0f, 0.0f, 1.0f, 1.0f,
-						XMFLOAT4(1.0f, 1.0f, 1.0f, alpha));
-
-		// ポリゴン描画
-		GetDeviceContext()->Draw(4, 0);
-		
-	}
+    // --- 4. セレクター（カーソル）の描画 ---
+    // 選択されている項目の横に目印を表示
+    float cursorY = 500.0f + (g_MenuSelect * 100.0f);
+    GetDeviceContext()->PSSetShaderResources(0, 1, &g_Texture[5]); // ロゴテクスチャを流用（必要に応じて変更）
+    SetSpriteColor(g_VertexBuffer, menuX - 200, cursorY, 40, 40, 0, 0, 1, 1, XMFLOAT4(1, 0.5f, 1, 1));
+    GetDeviceContext()->Draw(4, 0);
 }
-
-//	// 加減算のテスト
-//	SetBlendState(BLEND_MODE_ADD);		// 加算合成
-////	SetBlendState(BLEND_MODE_SUBTRACT);	// 減算合成
-//	for(int i=0; i<30; i++)
-//	{
-//		// テクスチャ設定
-//		GetDeviceContext()->PSSetShaderResources(0, 1, &g_Texture[2]);
-//
-//		// １枚のポリゴンの頂点とテクスチャ座標を設定
-//		float dx = 100.0f;
-//		float dy = 100.0f;
-//		float sx = (float)(rand() % 100);
-//		float sy = (float)(rand() % 100);
-//
-//
-//		SetSpriteColor(g_VertexBuffer, dx+sx, dy+sy, 50, 50, 0.0f, 0.0f, 1.0f, 1.0f,
-//			XMFLOAT4(0.3f, 0.3f, 1.0f, 0.5f));
-//
-//		// ポリゴン描画
-//		GetDeviceContext()->Draw(4, 0);
-//	}
-//	SetBlendState(BLEND_MODE_ALPHABLEND);	// 半透明処理を元に戻す
