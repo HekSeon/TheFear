@@ -157,7 +157,7 @@ void UpdateEnemy(void)
 		direction.z = player->pos.z - g_Enemies[i].pos.z;
 		float length = sqrt(direction.x * direction.x + direction.y * direction.y + direction.z * direction.z);
 
-		if (length > 0.01f) // Bölme hatasını önlemek için
+		if (length > 0.01f) 
 		{
 			direction.x /= length;
 			direction.y /= length;
@@ -259,15 +259,15 @@ void SpawnEnemy()
 {
 	for (int i = 0; i < MAX_ENEMY; i++)
 	{
-		if (!g_Enemies[i].use)  // Kullanılmayan (boş) düşman slotu
+		if (!g_Enemies[i].use) 
 		{
 			g_Enemies[i].isAlive = TRUE;
 			g_Enemies[i].use = TRUE;
 			g_Enemies[i].health = 100.0f;
 			g_Enemies[i].shadowIdx = CreateShadow(g_Enemies[i].pos, 1.0f, 1.0f);
 			currentEnemyCount++;
-			spawnTimer = 0; // Sayaç sıfırla
-			break;  // Tek bir düşman oluşturup çık
+			spawnTimer = 0; 
+			break; 
 		}
 	}
 }
