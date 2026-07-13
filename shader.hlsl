@@ -1,8 +1,13 @@
 
-
-//*****************************************************************************
-// 定数バッファ
-//*****************************************************************************
+//============================================================================
+//
+// BAYAR SEMIH
+// 
+// 
+// shader.hlsl
+// 
+// encoding error!
+//============================================================================
 
 // マトリクスバッファ
 cbuffer WorldBuffer : register( b0 )
@@ -82,6 +87,14 @@ cbuffer CameraBuffer : register(b7)
 	float4 Camera;
 }
 
+cbuffer DissolveBuffer : register(b8)
+{
+    float DissolveThreshold;
+    float MinY;
+    float MaxY;
+    int DissolveEnable;
+}
+
 
 
 //=============================================================================
@@ -96,7 +109,8 @@ void VertexShaderPolygon( in  float4 inPosition		: POSITION0,
 						  out float4 outNormal		: NORMAL0,
 						  out float2 outTexCoord	: TEXCOORD0,
 						  out float4 outDiffuse		: COLOR0,
-						  out float4 outWorldPos    : POSITION0)
+						  out float4 outWorldPos    : POSITION0,
+						  out float4 outLocalPos	: POSITION1)
 {
 	matrix wvp;
 	wvp = mul(World, View);
@@ -109,6 +123,8 @@ void VertexShaderPolygon( in  float4 inPosition		: POSITION0,
 
 	outWorldPos = mul(inPosition, World);
 
+    outLocalPos = inPosition;
+	
 	outDiffuse = inDiffuse;
 }
 
@@ -124,11 +140,12 @@ SamplerState	g_SamplerState : register( s0 );
 //=============================================================================
 // ピクセルシェーダ
 //=============================================================================
-void PixelShaderPolygon( in  float4 inPosition		: SV_POSITION,
-						 in  float4 inNormal		: NORMAL0,
-						 in  float2 inTexCoord		: TEXCOORD0,
-						 in  float4 inDiffuse		: COLOR0,
-						 in  float4 inWorldPos      : POSITION0,
+void PixelShaderPolygon(in float4 inPosition : SV_POSITION,
+						 in float4 inNormal : NORMAL0,
+						 in float2 inTexCoord : TEXCOORD0,
+						 in float4 inDiffuse : COLOR0,
+						 in float4 inWorldPos : POSITION0,
+						 in float4 inLocalPos : POSITION1,
 
 						 out float4 outDiffuse		: SV_Target )
 {
@@ -145,52 +162,52 @@ void PixelShaderPolygon( in  float4 inPosition		: SV_POSITION,
 		color = inDiffuse;
 	}
 
-	if (Light.Enable == 0)
-	{
-		color = color * Material.Diffuse;
-	}
-	else
-	{
-		float4 tempColor = float4(0.0f, 0.0f, 0.0f, 0.0f);
-		float4 outColor = float4(0.0f, 0.0f, 0.0f, 0.0f);
+        if (Light.Enable == 0)
+        {
+            color = color * Material.Diffuse;
+        }
+        else
+        {
+            float4 tempColor = float4(0.0f, 0.0f, 0.0f, 0.0f);
+            float4 outColor = float4(0.0f, 0.0f, 0.0f, 0.0f);
 
-		for (int i = 0; i < 5; i++)
-		{
-			float3 lightDir;
-			float light;
+            for (int i = 0; i < 5; i++)
+            {
+                float3 lightDir;
+                float light;
 
-			if (Light.Flags[i].y == 1)
-			{
-				if (Light.Flags[i].x == 1)
-				{
-					float3 lightDir = normalize(-Light.Direction[i].xyz);
-            float NdotL = max(dot(inNormal.xyz, lightDir), 0.0f);
-            outColor += color * Material.Diffuse * NdotL * Light.Diffuse[i];
-				}
-				else if (Light.Flags[i].x == 2)
-				{
-					lightDir = normalize(Light.Position[i].xyz - inWorldPos.xyz);
-					light = dot(lightDir, inNormal.xyz);
+                if (Light.Flags[i].y == 1)
+                {
+                    if (Light.Flags[i].x == 1)
+                    {
+                        float3 lightDir = normalize(-Light.Direction[i].xyz);
+                        float NdotL = max(dot(inNormal.xyz, lightDir), 0.0f);
+                        outColor += color * Material.Diffuse * NdotL * Light.Diffuse[i];
+                    }
+                    else if (Light.Flags[i].x == 2)
+                    {
+                        lightDir = normalize(Light.Position[i].xyz - inWorldPos.xyz);
+                        light = dot(lightDir, inNormal.xyz);
 
-					tempColor = color * Material.Diffuse * light * Light.Diffuse[i];
+                        tempColor = color * Material.Diffuse * light * Light.Diffuse[i];
 
-					float distance = length(inWorldPos - Light.Position[i]);
+                        float distance = length(inWorldPos - Light.Position[i]);
 
-					float att = saturate((Light.Attenuation[i].x - distance) / Light.Attenuation[i].x);
-					tempColor *= att;
-				}
-				else
-				{
-					tempColor = float4(0.0f, 0.0f, 0.0f, 0.0f);
-				}
+                        float att = saturate((Light.Attenuation[i].x - distance) / Light.Attenuation[i].x);
+                        tempColor *= att;
+                    }
+                    else
+                    {
+                        tempColor = float4(0.0f, 0.0f, 0.0f, 0.0f);
+                    }
 
-				outColor += tempColor;
-			}
-		}
+                    outColor += tempColor;
+                }
+            }
 
-		color = outColor;
-		color.a = inDiffuse.a * Material.Diffuse.a;
-	}
+            color = outColor;
+            color.a = inDiffuse.a * Material.Diffuse.a;
+        }
 
 	//フォグ
 	if (Fog.Enable == 1)
@@ -217,4 +234,14 @@ void PixelShaderPolygon( in  float4 inPosition		: SV_POSITION,
 			outDiffuse.g = 0.0f;			
 		}
 	}
+	
+    if (DissolveEnable==1)
+    {
+        float heightFraction = saturate((inLocalPos.y - MinY) / (MaxY - MinY));
+        if (heightFraction < DissolveThreshold)
+        {
+            clip(-1);
+
+        }
+    }
 }

@@ -60,11 +60,10 @@ void InitLight(void)
 
 
 
-	g_Fog.FogStart = 20.0f;									
-	g_Fog.FogEnd = 250.0f;									
+	g_Fog.FogStart = 250.0f;									
+	g_Fog.FogEnd = 500.0f;									
 	g_Fog.FogColor = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f); // Skydome rengi gibi
-	SetFog(&g_Fog);
-	SetFogEnable(TRUE);				
+	SetFog(&g_Fog);			
 
 }
 

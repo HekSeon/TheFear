@@ -173,7 +173,7 @@ void DrawGame0(void)
 	
 	DrawEnemy();
 
-	//DrawSword(); 
+	DrawSword(); 
 
 	//DrawShadow();
 	
@@ -189,7 +189,7 @@ void DrawGame0(void)
 
 	SetDepthEnable(TRUE);
 
-	SetFogEnable(TRUE);
+	SetFogEnable(FALSE);
 }
 
 

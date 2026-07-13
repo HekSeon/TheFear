@@ -135,6 +135,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="dissolve.h" />
     <ClInclude Include="Source\Public\camera.h" />
     <ClInclude Include="Source\Public\collision.h" />
     <ClInclude Include="Source\Public\debugproc.h" />
@@ -163,6 +164,7 @@
     <ClInclude Include="Source\Public\UI.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="dissolve.cpp" />
     <ClCompile Include="Source\Private\camera.cpp" />
     <ClCompile Include="Source\Private\collision.cpp" />
     <ClCompile Include="Source\Private\debugproc.cpp" />
@@ -189,6 +191,11 @@
     <ClCompile Include="Source\Private\title.cpp" />
     <ClCompile Include="Source\Private\tree.cpp" />
     <ClCompile Include="Source\Private\UI.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="shader.hlsl">
+      <FileType>Document</FileType>
+    </None>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

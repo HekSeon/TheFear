@@ -1,9 +1,14 @@
-//=============================================================================
+//============================================================================
 //
-// メイン処理 [main.cpp]
-// Author : 
-//
-//=============================================================================
+// BAYAR SEMIH
+// 
+// 
+// main.cpp
+// 
+// encode error!
+//============================================================================
+
+
 #include "main.h"
 #include "renderer.h"
 #include "input.h"
@@ -221,21 +226,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 HRESULT Init(HINSTANCE hInstance, HWND hWnd, BOOL bWindow)
 {
 	InitRenderer(hInstance, hWnd, bWindow);
-//
-//#ifdef _DEBUG
-//	// Setup Dear ImGui context
-//	IMGUI_CHECKVERSION();
-//	ImGui::CreateContext();
-//	ImGuiIO& io = ImGui::GetIO();
-//	io.Fonts->AddFontFromFileTTF(u8"c:\\Windows\\Fonts\\meiryo.ttc", 18.0f, nullptr, io.Fonts->GetGlyphRangesJapanese());    // 日本語フォントの指定
-//	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-//	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-//
-//
-//	// Setup Platform/Renderer backends
-//	ImGui_ImplWin32_Init(hWnd);
-//	ImGui_ImplDX11_Init(GetDevice(), GetDeviceContext());
-//#endif
 
 	InitLight();
 
@@ -263,14 +253,6 @@ HRESULT Init(HINSTANCE hInstance, HWND hWnd, BOOL bWindow)
 //=============================================================================
 void Uninit(void)
 {
-	// 終了のモードをセット
-
-//#ifdef _DEBUG
-//	ImGui_ImplDX11_Shutdown();
-//	ImGui_ImplWin32_Shutdown();
-//	ImGui::DestroyContext();
-//#endif
-
 
 	SetMode(MODE_MAX);
 
@@ -291,10 +273,6 @@ void Uninit(void)
 //=============================================================================
 void Update(void)
 {
-	/*ImGui_ImplDX11_NewFrame();
-	ImGui_ImplWin32_NewFrame();
-	ImGui::NewFrame();*/
-	// 入力の更新処理
 	UpdateInput();
 
 	UpdateLight();
@@ -317,44 +295,6 @@ void Update(void)
 	}
 	UpdateFade();
 
-
-//#ifdef _DEBUG
-//	CAMERA* g_camera = GetCamera();
-//	PLAYER* g_player = GetPlayer();
-//	// (Your code process and dispatch Win32 messages)
-//	// Start the Dear ImGui frame
-//	if (ImGui::Begin("debugger")) {
-//		ImGui::Text(" FPS:%d", g_CountFPS);
-//		ImGui::Text("Mouse PosX: %d Mouse PosY : %d", GetMousePosX(), GetMousePosY());
-//		ImGui::Text("GAME MODE: %d", g_Mode);
-//		ImGui::Text("Player Pos: X: %d Z:%d", g_player[0].pos.x, g_player[0].pos.z);
-//		ImGui::Text("Camera Pos: X:%d Y:%d Z:%d", g_camera->pos.x,g_camera->pos.y,g_camera->pos.z);
-//		ImGui::Text("Camera Rot: X: %d Z: %d", g_camera->rot.x, g_camera->rot.z);
-//
-//		if (ImGui::Button("TITLE", ImVec2(120, 40)))
-//		{
-//			g_Mode = MODE_TITLE;
-//		}
-//
-//		if (ImGui::Button("GAME", ImVec2(120, 40)))
-//		{
-//			g_Mode = MODE_GAME;
-//		}
-//
-//		if (ImGui::Button("RESULT", ImVec2(120, 40)))
-//		{
-//			g_Mode = MODE_RESULT;
-//		}
-//
-//		if (ImGui::Button("KILL BUTON", ImVec2(120, 40)))
-//		{
-//			exit(0);
-//		}
-//		
-//	}
-//	ImGui::End();
-//
-//#endif
 }
 
 //=============================================================================

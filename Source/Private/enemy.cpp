@@ -364,14 +364,14 @@ ENEMY* FindNearestEnemy(XMFLOAT3 swordPos)
 //=============================================================================
 ENEMY *GetEnemy(void)
 {
-	//for (int i = 0; i < MAX_ENEMY; i++)
-	//{
-	//	if (g_Enemies[i].isAlive)  // Eğer düşman aktifse
-	//	{
-	//		return &g_Enemies[i];
-	//	}
-	//}
-	return &g_Enemies[0];
+	for (int i = 0; i < MAX_ENEMY; i++)
+	{
+		if (g_Enemies[i].isAlive) 
+		{
+			return &g_Enemies[i];
+		}
+	}
+	return nullptr;
 }
 
 

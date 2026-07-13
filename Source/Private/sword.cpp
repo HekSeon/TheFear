@@ -150,44 +150,36 @@ void UpdateSword(void)
 	if (g_SwordState == FOLLOW_PLAYER)
 	{
 		
-		// 🎯 Kılıcı oyuncunun etrafında belirli bir mesafede tut
-		XMFLOAT3 followOffset = { 50.0f, 30.0f, -40.0f }; // Oyuncunun biraz üstünde
+		// sword palyer near
+		XMFLOAT3 followOffset = { 50.0f, 30.0f, -40.0f };
 		XMMATRIX playerMatrix = XMLoadFloat4x4(&player->mtxWorld);
 		XMVECTOR offsetVector = XMVectorSet(followOffset.x, followOffset.y, followOffset.z, 1.0f);
 		offsetVector = XMVector3TransformCoord(offsetVector, playerMatrix);
 		XMStoreFloat3(&g_Sword.pos, offsetVector);
-		// Kılıcı oyuncunun dönüşüne ayarla ve Y ekseninde 180° çevir
+		// sword rotation set
 		XMFLOAT3 swordRot;
 		XMStoreFloat3(&swordRot, XMLoadFloat3(&player->rot));
-		swordRot.y += XM_PI; // 180 derece döndürme (XM_PI = 3.14159)
+		swordRot.y += XM_PI;
 
-		// Güncellenmiş rotasyonu ata
 		XMStoreFloat3(&g_Sword.rot, XMLoadFloat3(&swordRot));
 	}
 
 	else if (g_SwordState == ATTACK_ENEMY)
 	{
-		// Kılıcın mevcut pozisyonunu yükle
 		XMVECTOR swordPos = XMLoadFloat3(&g_Sword.pos);
 		XMVECTOR targetPos = XMLoadFloat3(&g_TargetPos);
 
-		// Hedefe doğru yönü hesapla
 		XMVECTOR direction = XMVectorSubtract(targetPos, swordPos);
 		if (XMVectorGetX(XMVector3Length(direction)) < 0.01f)
 		{
-			g_SwordState = FOLLOW_PLAYER; // Kılıç düşmana ulaşınca geri dön
+			g_SwordState = FOLLOW_PLAYER; 
 			return;
 		}
 		direction = XMVector3Normalize(direction);
 
-		// Kılıcı hedefe doğru hareket ettir
-		float speed = 1.0f; // Hızı artır
+		float speed = 1.0f;
 		swordPos = XMVectorAdd(swordPos, XMVectorScale(direction, speed));
 		XMStoreFloat3(&g_Sword.pos, swordPos);
-
-
-		// Debug amaçlı kılıcın pozisyonunu ekrana yazdır (Opsiyonel)
-		// printf("Sword Position: %.2f, %.2f, %.2f\n", g_Sword.pos.x, g_Sword.pos.y, g_Sword.pos.z);
 	}
 
 	else if (g_SwordState == RETURN_TO_PLAYER)
@@ -230,6 +222,8 @@ void UpdateSword(void)
 	// 🎯 Kılıcı en yakın düşmana yönlendir
 void AttackNearestEnemy()
 {
+	if (g_SwordState == ATTACK_ENEMY) return;
+
 	if (g_SwordState == FOLLOW_PLAYER)
 	{
 		g_SwordState = ATTACK_ENEMY;
