@@ -2,7 +2,7 @@
 // 
 // light.cpp
 // 
-// Author: HekSeon
+// Author :BAYAR SEMIH
 ///////////////////////////////////
 #include "main.h"
 #include "renderer.h"

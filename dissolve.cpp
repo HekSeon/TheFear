@@ -1,3 +1,10 @@
+///////////////////////////////////
+// 
+// light.h
+// 
+// Author: BAYAR "HekSeon" SEMIH
+///////////////////////////////////
+
 #include "dissolve.h"
 
 void StartDissolveOut(DISSOLVE_STATE* state, float speed, float minY, float maxY)
