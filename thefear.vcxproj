@@ -164,10 +164,10 @@
     <ClInclude Include="Source\Public\UI.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="dissolve.cpp" />
     <ClCompile Include="Source\Private\camera.cpp" />
     <ClCompile Include="Source\Private\collision.cpp" />
     <ClCompile Include="Source\Private\debugproc.cpp" />
+    <ClCompile Include="Source\Private\dissolve.cpp" />
     <ClCompile Include="Source\Private\enemy.cpp" />
     <ClCompile Include="Source\Private\fade.cpp" />
     <ClCompile Include="Source\Private\game.cpp" />

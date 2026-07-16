@@ -24,11 +24,15 @@
 
 #define MAX_MODEL_SWORD		(1)								// プレイヤーの数
 
+#define SWORD_MIN_Y (-0.855346f)
+#define SWORD_MAX_Y (0.855346f)
+
 PLAYER* player = GetPlayer();
 enum SwordState {
 	FOLLOW_PLAYER,
 	ATTACK_ENEMY,
-	RETURN_TO_PLAYER
+	DISSOLVING_OUT,
+	DISSOLVING_IN
 };
 
 SwordState g_SwordState = FOLLOW_PLAYER;
@@ -85,7 +89,10 @@ HRESULT InitSword(void)
 	//          ↑
 	//        このメンバー変数が生成した影のIndex番号
 
-
+	g_Sword.dissolve.threshold = 0.0f;
+	g_Sword.dissolve.minY = SWORD_MIN_Y;
+	g_Sword.dissolve.maxY = SWORD_MAX_Y;
+	g_Sword.dissolve.speed = 0.0f;
 
 
 		// 位置・回転・スケールの初期設定
@@ -146,6 +153,7 @@ void UpdateSword(void)
 	}
 #endif
 
+	bUpdateDdissolve(&g_Sword.dissolve, 1.0f);
 
 	if (g_SwordState == FOLLOW_PLAYER)
 	{
@@ -168,36 +176,50 @@ void UpdateSword(void)
 	{
 		XMVECTOR swordPos = XMLoadFloat3(&g_Sword.pos);
 		XMVECTOR targetPos = XMLoadFloat3(&g_TargetPos);
-
 		XMVECTOR direction = XMVectorSubtract(targetPos, swordPos);
+
 		if (XMVectorGetX(XMVector3Length(direction)) < 0.01f)
 		{
-			g_SwordState = FOLLOW_PLAYER; 
+			g_SwordState = FOLLOW_PLAYER;
 			return;
 		}
 		direction = XMVector3Normalize(direction);
-
-		float speed = 1.0f;
-		swordPos = XMVectorAdd(swordPos, XMVectorScale(direction, speed));
+		swordPos = XMVectorAdd(swordPos, XMVectorScale(direction, g_SwordSpeed));
 		XMStoreFloat3(&g_Sword.pos, swordPos);
+
+		if (CollisionBC(g_TargetPos, g_Sword.pos, 1.0f, 1.0f))
+		{
+			ENEMY* nearestEnemy = FindNearestEnemy(g_TargetPos);
+			if (nearestEnemy)
+			{
+				nearestEnemy->health -= 50;
+				if (nearestEnemy->health <= 0)
+				{
+					nearestEnemy->isAlive = FALSE;
+					nearestEnemy->use = FALSE;
+				}
+			}
+			StartDissolveOut(&g_Sword.dissolve, 0.05f, SWORD_MIN_Y, SWORD_MAX_Y);
+			g_SwordState = DISSOLVING_OUT;
+		}
 	}
 
-	else if (g_SwordState == RETURN_TO_PLAYER)
+	else if (g_SwordState == DISSOLVING_OUT)
 	{
-		// 🎯 Kılıcı oyuncuya geri döndür
-		XMVECTOR swordPos = XMLoadFloat3(&g_Sword.pos);
-		XMVECTOR playerPos = XMLoadFloat3(&player->pos);
-		XMVECTOR direction = XMVector3Normalize(XMVectorSubtract(playerPos, swordPos));
-		swordPos = XMVectorAdd(swordPos, XMVectorScale(direction, g_SwordSpeed));
-
-		XMStoreFloat3(&g_Sword.pos, swordPos);
-
-		// 🎯 Eğer oyuncuya ulaştıysa, tekrar takip moduna geç
-		float distance = XMVectorGetX(XMVector3Length(XMVectorSubtract(playerPos, swordPos)));
-		if (distance < 0.1f) {
-			g_SwordState = FOLLOW_PLAYER;
+		if (g_Sword.dissolve.mode == DISSOLVE_NONE)
+		{
+			g_Sword.pos = player->pos;
+			StartDissolveIn(&g_Sword.dissolve, 0.05f, SWORD_MIN_Y, SWORD_MAX_Y);
+			g_SwordState = DISSOLVING_IN;
 		}
 
+	}
+	else if (g_SwordState == DISSOLVING_IN)
+	{
+		if (g_Sword.dissolve.mode == DISSOLVE_NONE)
+		{
+			g_SwordState = FOLLOW_PLAYER;
+		}
 	}
 
 	if (GetKeyboardTrigger(DIK_SPACE))
@@ -219,45 +241,17 @@ void UpdateSword(void)
 
 }
 
-	// 🎯 Kılıcı en yakın düşmana yönlendir
+	// Kılıcı en yakın düşmana yönlendir
 void AttackNearestEnemy()
 {
-	if (g_SwordState == ATTACK_ENEMY) return;
+	if (g_SwordState != FOLLOW_PLAYER) return;
 
-	if (g_SwordState == FOLLOW_PLAYER)
-	{
-		g_SwordState = ATTACK_ENEMY;
-		ENEMY* nearestEnemy = FindNearestEnemy(g_Sword.pos);
+	ENEMY* nearestEnemy = FindNearestEnemy(g_Sword.pos);
+	if (!nearestEnemy) return;
 
-		if (nearestEnemy) {
-			g_TargetPos = nearestEnemy->pos;
-			g_SwordState = ATTACK_ENEMY;
-
-			// Kılıcı düşmana doğru hareket ettir
-			XMVECTOR swordPos = XMLoadFloat3(&g_Sword.pos);
-			XMVECTOR targetPos = XMLoadFloat3(&g_TargetPos);
-			XMVECTOR direction = XMVector3Normalize(XMVectorSubtract(targetPos, swordPos));
-
-			// Kılıcı hedefe doğru hareket ettir
-			swordPos = XMVectorAdd(swordPos, XMVectorScale(direction, speed)); // İleri hareket
-			XMStoreFloat3(&g_Sword.pos, swordPos); // Yeni pozisyonu sakla
-
-			ENEMY* enemies = GetEnemy();
-			
-			// Hasar ver
-			if (CollisionBC(g_TargetPos, g_Sword.pos, 1.0f, 1.0f))
-			{
-				enemies->health -= 50;
-
-				if (enemies->health <= 0)
-				{
-					enemies->isAlive = FALSE;
-					enemies->use = FALSE;
-				}
-				g_SwordState = FOLLOW_PLAYER;
-			}
-		}
-	}
+	g_SwordState = ATTACK_ENEMY;
+	g_TargetPos = nearestEnemy->pos;
+	
 }
 
 
@@ -268,24 +262,26 @@ void DrawSword(void)
 {
 	if (g_Sword.use == FALSE) return;
 
+	BOOL dissolveActive = (g_Sword.dissolve.mode != DISSOLVE_NONE);
+	SetDissolve(g_Sword.dissolve.threshold, g_Sword.dissolve.minY, g_Sword.dissolve.maxY, dissolveActive);
+
 	SetCullingMode(CULL_MODE_NONE);
 
 	XMMATRIX mtxScl, mtxRot, mtxTranslate, mtxPlayer;
 
-	// 🎯 **Dünya matrisi hesaplama (Scaling → Rotation → Translation)**
 	mtxPlayer = XMMatrixIdentity();
 	mtxScl = XMMatrixScaling(g_Sword.scl.x, g_Sword.scl.y, g_Sword.scl.z);
 	mtxRot = XMMatrixRotationRollPitchYaw(g_Sword.rot.x, g_Sword.rot.y, g_Sword.rot.z);
 	mtxTranslate = XMMatrixTranslation(g_Sword.pos.x, g_Sword.pos.y, g_Sword.pos.z);
 
-	// 🎯 **Matrisleri doğru sırayla uygula**
 	mtxPlayer = XMMatrixMultiply(mtxScl, mtxRot);
 	mtxPlayer = XMMatrixMultiply(mtxPlayer, mtxTranslate);
 
-	// 🎯 **Matrisleri kaydet ve modeli çiz**
 	SetWorldMatrix(&mtxPlayer);
 	XMStoreFloat4x4(&g_Sword.mtxWorld, mtxPlayer);
 	DrawModel(&g_Sword.model);
+
+	SetDissolve(0.0f, 0.0f, 0.0f, FALSE);
 }
 
 

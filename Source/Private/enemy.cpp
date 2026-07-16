@@ -17,6 +17,7 @@
 #include "collision.h"
 #include "sword.h"
 #include "score.h"
+#include "meshfield.h"
 //#include "particle.h"
 
 //*****************************************************************************
@@ -129,16 +130,18 @@ void UpdateEnemy(void)
 {
 	PLAYER* player = GetPlayer();
 
+	spawnTimer++;
+
 	for (int i = 0; i < MAX_ENEMY; i++)
 	{
+
 
 		if (CollisionBB(g_Enemies[i].pos, 1.f, 1.f, player->pos, 1.f, 1.f))
 		{
 			player->health -= 1; // Oyuncunun sağlığını azal
 		}
 
-	// Zamanlayıcıyı artır
-	spawnTimer++;
+	
 
 	// 20 saniyede bir düşman ekle
 	if (spawnTimer >= SPAWN_INTERVAL && currentEnemyCount < MAX_ENEMY)
@@ -177,8 +180,18 @@ void UpdateEnemy(void)
 		// Yeni pozisyon hesapla
 		XMFLOAT3 newPos;
 		newPos.x = g_Enemies[i].pos.x + direction.x * speed;
-		newPos.y = g_Enemies[i].pos.y + direction.y * speed;
 		newPos.z = g_Enemies[i].pos.z + direction.z * speed;
+
+		XMFLOAT3 terrainHeight,NORMAL;
+
+		if (RayHitField(newPos, &terrainHeight, &NORMAL))
+		{
+			newPos.y = terrainHeight.y;
+		}
+		else
+		{
+			newPos.y = g_Enemies[i].pos.y;
+		}
 
 		bool collisionDetected = false;
 
@@ -259,15 +272,17 @@ void SpawnEnemy()
 {
 	for (int i = 0; i < MAX_ENEMY; i++)
 	{
-		if (!g_Enemies[i].use) 
+		if (!g_Enemies[i].use)
 		{
 			g_Enemies[i].isAlive = TRUE;
 			g_Enemies[i].use = TRUE;
 			g_Enemies[i].health = 100.0f;
-			g_Enemies[i].shadowIdx = CreateShadow(g_Enemies[i].pos, 1.0f, 1.0f);
+
+			g_Enemies[i].pos = XMFLOAT3(rand() % 700 - 550, 15.0f, rand() % 700 - 550);
+
 			currentEnemyCount++;
-			spawnTimer = 0; 
-			break; 
+			spawnTimer = 0;
+			break;
 		}
 	}
 }

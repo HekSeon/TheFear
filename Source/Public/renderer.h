@@ -121,3 +121,5 @@ void SetShaderCamera(XMFLOAT3 pos);
 
 void SetClearColor(float* color4);
 
+void SetDissolve(float threshold, float minY, float maxY, bool dissolveEnable);
+

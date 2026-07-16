@@ -183,6 +183,7 @@ void UpdatePlayer(void)
 	g_Player.move = FALSE;
 	g_Player.attack = FALSE;
 
+
 	// Kamera mod değişimi
 	if (GetKeyboardTrigger(DIK_X)) g_CameraMode = FIRST_PERSON;
 	if (GetKeyboardTrigger(DIK_C)) g_CameraMode = THIRD_PERSON;
@@ -200,19 +201,39 @@ void UpdatePlayer(void)
 	if (GetKeyboardPress(DIK_D) && GetKeyboardPress(DIK_W)) { g_Player.spd = VALUE_MOVE; g_Player.dir = 5 * XM_PI / 4; g_Player.move = TRUE; }
 	if (GetKeyboardPress(DIK_D) && GetKeyboardPress(DIK_S)) { g_Player.spd = VALUE_MOVE; g_Player.dir = 7 * XM_PI / 4; g_Player.move = TRUE; }
 
-	
 
-	// Yükseklik kontrolü
+	if (g_Player.spd > 0.0f)
+	{
+		g_Player.rot.y = g_Player.dir + cam->rot.y;
+		g_Player.pos.x -= sinf(g_Player.rot.y) * g_Player.spd;
+		g_Player.pos.z -= cosf(g_Player.rot.y) * g_Player.spd;
+	}
+
+
 	XMFLOAT3 HitPosition, Normal;
 	if (RayHitField(g_Player.pos, &HitPosition, &Normal))
+	{
 		g_Player.pos.y = HitPosition.y + PLAYER_OFFSET_Y;
+	}
 	else
+	{
 		g_Player.pos.y = PLAYER_OFFSET_Y;
+	}
 
 
 	ENEMY* g_Enemies = GetEnemy();
+
+	if (g_Enemies == nullptr)
+	{
+		return;
+	}
+
 	for (int i = 0; i < MAX_ENEMY; i++)
 	{
+		if (!g_Enemies[i].use || !g_Enemies[i].isAlive)
+		{
+			continue;
+		}
 		if (CollisionBB(g_Enemies[i].pos, 5.0f, 5.0f, g_Player.pos, 5.0f, 5.0f))
 		{
 			if (IsMouseLeftPressed())
@@ -233,15 +254,7 @@ void UpdatePlayer(void)
 		}
 	}
 
-	// Pozisyon güncelleme
-	if (g_Player.spd > 0.0f)
-	{
-		g_Player.rot.y = g_Player.dir + cam->rot.y;
-		g_Player.pos.x -= sinf(g_Player.rot.y) * g_Player.spd;
-		g_Player.pos.z -= cosf(g_Player.rot.y) * g_Player.spd;
-	}
 
-	// Gölge pozisyonu
 	XMFLOAT3 pos = g_Player.pos;
 	pos.y -= (PLAYER_OFFSET_Y - 0.1f);
 	SetPositionShadow(g_Player.shadowIdx, pos);
@@ -255,7 +268,6 @@ void UpdatePlayer(void)
 		SetFade(FADE_OUT, MODE_RESULT);
 		g_bPause = FALSE;
 	}
-
 
 
 	// 🟢 ANİMASYON GÜNCELLEME ÇAĞRISI
@@ -298,33 +310,27 @@ void DrawTPSPlayer(void)
 
 	CAMERA* g_Camera = GetCamera();
 
-	// 🎯 **Kameranın ileri yönünü hesapla**
 	XMVECTOR cameraForward = XMVectorSubtract(XMLoadFloat3(&g_Camera->Target), XMLoadFloat3(&g_Camera->Eye));
 	cameraForward = XMVector3Normalize(cameraForward);
 
-	// 🎯 **Y ekseni dönüş açısını hesapla (atan2 ile doğru hesaplama)**
 	float playerRotationY = atan2f(-XMVectorGetX(cameraForward), -XMVectorGetZ(cameraForward));
 
-	// 🎯 **Karakterin rotasyonunu güncelle**
 	g_Player.rot.x = playerRotationY;
 	g_Player.rot.z = playerRotationY;
 
-	// 🎯 **Dünya matrisi hesaplama (Scaling → Rotation → Translation)**
+
 	mtxWorld = XMMatrixIdentity();
 	mtxScl = XMMatrixScaling(g_Player.scl.x, g_Player.scl.y, g_Player.scl.z);
 	mtxRot = XMMatrixRotationRollPitchYaw(g_Player.rot.x, g_Player.rot.y, g_Player.rot.z);
 	mtxTranslate = XMMatrixTranslation(g_Player.pos.x, g_Player.pos.y, g_Player.pos.z);
 
-	// 🎯 **Matrisleri doğru sırayla uygula**
 	mtxWorld = XMMatrixMultiply(mtxScl, mtxRot);
 	mtxWorld = XMMatrixMultiply(mtxWorld, mtxTranslate);
 
-	// 🎯 **Matrisleri kaydet ve modeli çiz**
 	SetWorldMatrix(&mtxWorld);
 	XMStoreFloat4x4(&g_Player.mtxWorld, mtxWorld);
 	DrawModel(&g_Player.model);
 
-	// 🎯 **Karakterin parçalarını çiz**
 	for (int i = 0; i < PLAYER_PARTS_MAX; i++)
 	{
 		mtxWorld = XMMatrixIdentity();

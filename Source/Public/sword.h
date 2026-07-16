@@ -8,7 +8,7 @@
 #pragma once
 
 #include "model.h"
-
+#include "dissolve.h"
 
 //*****************************************************************************
 // 
@@ -44,7 +44,7 @@ struct SWORD
 
 	// 親は、NULL、子供は親のアドレスを入れる(セーブ＆ロードの時は↓ここ気をつける事)
 
-	
+	DISSOLVE_STATE dissolve;
 };
 
 

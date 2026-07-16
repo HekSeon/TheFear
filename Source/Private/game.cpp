@@ -64,7 +64,7 @@ HRESULT InitGame(void)
 	InitTree();
 
 
-	InitEnemy();
+	//InitEnemy();
 
 	InitScore();
 
@@ -146,8 +146,6 @@ void UpdateGame(void)
 		return;
 
 
-
-	//CheckHit();
 
 	
 }

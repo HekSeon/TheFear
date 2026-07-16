@@ -37,98 +37,122 @@
     <Filter Include="ソース ファイル\renderer">
       <UniqueIdentifier>{5265ef87-dc00-480b-b5b1-3e7f4b2dc3e9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ソース ファイル\enemy">
+      <UniqueIdentifier>{4d5e6f7a-8b9c-0d1e-2f3a-4b5c6d7e8f9a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\camera">
+      <UniqueIdentifier>{a521ef3b-18b4-472d-8b01-fb264f3d2e10}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\collision">
+      <UniqueIdentifier>{c4f9bc21-7a5d-4a11-80f2-794d2cb64f3e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\debug">
+      <UniqueIdentifier>{d105fa3d-8b3c-4bf0-96f3-10bc49ab1264}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\field">
+      <UniqueIdentifier>{e27bb124-0a3b-4cd3-bc12-f046de827c1a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\player">
+      <UniqueIdentifier>{f41ab195-2cde-49b6-80de-cd4e195bc4a1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\sound">
+      <UniqueIdentifier>{1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\menus">
+      <UniqueIdentifier>{2b3c4d5e-6f7a-8b9c-0d1e-2f3a-4b5c6d7e8f9a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\renderer">
+      <UniqueIdentifier>{3c4d5e6f-7a8b-9c0d-1e2f-3a4b5c6d7e8f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\enemy">
+      <UniqueIdentifier>{5e6f7a8b-9c0d-1e2f-3a4b-5c6d7e8f9a0b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Source\Public\playeranimation.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Public\renderer.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Public\result.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Public\score.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Public\shadow.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Public\skydome.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Public\sound.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Public\sprite.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Public\sword.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Public\title.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Public\tree.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Public\UI.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Public\camera.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Public\collision.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Public\debugproc.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Public\enemy.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Public\fade.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Public\game.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Public\input.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Public\light.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
     <ClInclude Include="Source\Public\main.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="Source\Public\camera.h">
+      <Filter>ヘッダー ファイル\camera</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Public\collision.h">
+      <Filter>ヘッダー ファイル\collision</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Public\debugproc.h">
+      <Filter>ヘッダー ファイル\debug</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Public\enemy.h">
+      <Filter>ヘッダー ファイル\enemy</Filter>
+    </ClInclude>
     <ClInclude Include="Source\Public\meshfield.h">
-      <Filter>ヘッダー ファイル</Filter>
+      <Filter>ヘッダー ファイル\field</Filter>
     </ClInclude>
     <ClInclude Include="Source\Public\meshwall.h">
-      <Filter>ヘッダー ファイル</Filter>
+      <Filter>ヘッダー ファイル\field</Filter>
     </ClInclude>
-    <ClInclude Include="Source\Public\model.h">
-      <Filter>ヘッダー ファイル</Filter>
+    <ClInclude Include="Source\Public\skydome.h">
+      <Filter>ヘッダー ファイル\field</Filter>
     </ClInclude>
-    <ClInclude Include="Source\Public\particle.h">
-      <Filter>ヘッダー ファイル</Filter>
+    <ClInclude Include="Source\Public\tree.h">
+      <Filter>ヘッダー ファイル\field</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Public\game.h">
+      <Filter>ヘッダー ファイル\menus</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Public\fade.h">
+      <Filter>ヘッダー ファイル\menus</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Public\title.h">
+      <Filter>ヘッダー ファイル\menus</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Public\result.h">
+      <Filter>ヘッダー ファイル\menus</Filter>
     </ClInclude>
     <ClInclude Include="Source\Public\player.h">
-      <Filter>ヘッダー ファイル</Filter>
+      <Filter>ヘッダー ファイル\player</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Public\playeranimation.h">
+      <Filter>ヘッダー ファイル\player</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Public\shadow.h">
+      <Filter>ヘッダー ファイル\player</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Public\sword.h">
+      <Filter>ヘッダー ファイル\player</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Public\score.h">
+      <Filter>ヘッダー ファイル\player</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Public\particle.h">
+      <Filter>ヘッダー ファイル\player</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Public\model.h">
+      <Filter>ヘッダー ファイル\player</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Public\input.h">
+      <Filter>ヘッダー ファイル\player</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Public\UI.h">
+      <Filter>ヘッダー ファイル\player</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Public\renderer.h">
+      <Filter>ヘッダー ファイル\renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Public\light.h">
+      <Filter>ヘッダー ファイル\renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Public\sprite.h">
+      <Filter>ヘッダー ファイル\renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Public\sound.h">
+      <Filter>ヘッダー ファイル\sound</Filter>
     </ClInclude>
     <ClInclude Include="dissolve.h">
-      <Filter>ソース ファイル</Filter>
+      <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Source\Private\enemy.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
     <ClCompile Include="Source\Private\main.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Private\sprite.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Source\Private\camera.cpp">
@@ -140,35 +164,38 @@
     <ClCompile Include="Source\Private\debugproc.cpp">
       <Filter>ソース ファイル\debug</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Private\meshwall.cpp">
-      <Filter>ソース ファイル\field</Filter>
+    <ClCompile Include="Source\Private\enemy.cpp">
+      <Filter>ソース ファイル\enemy</Filter>
     </ClCompile>
     <ClCompile Include="Source\Private\meshfield.cpp">
       <Filter>ソース ファイル\field</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Private\player.cpp">
-      <Filter>ソース ファイル\player</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Private\playeranimation.cpp">
-      <Filter>ソース ファイル\player</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Private\sound.cpp">
-      <Filter>ソース ファイル\sound</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Private\title.cpp">
-      <Filter>ソース ファイル\menus</Filter>
+    <ClCompile Include="Source\Private\meshwall.cpp">
+      <Filter>ソース ファイル\field</Filter>
     </ClCompile>
     <ClCompile Include="Source\Private\skydome.cpp">
       <Filter>ソース ファイル\field</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Private\result.cpp">
-      <Filter>ソース ファイル\menus</Filter>
+    <ClCompile Include="Source\Private\tree.cpp">
+      <Filter>ソース ファイル\field</Filter>
     </ClCompile>
     <ClCompile Include="Source\Private\game.cpp">
       <Filter>ソース ファイル\menus</Filter>
     </ClCompile>
     <ClCompile Include="Source\Private\fade.cpp">
       <Filter>ソース ファイル\menus</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Private\title.cpp">
+      <Filter>ソース ファイル\menus</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Private\result.cpp">
+      <Filter>ソース ファイル\menus</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Private\player.cpp">
+      <Filter>ソース ファイル\player</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Private\playeranimation.cpp">
+      <Filter>ソース ファイル\player</Filter>
     </ClCompile>
     <ClCompile Include="Source\Private\shadow.cpp">
       <Filter>ソース ファイル\player</Filter>
@@ -178,12 +205,6 @@
     </ClCompile>
     <ClCompile Include="Source\Private\score.cpp">
       <Filter>ソース ファイル\player</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Private\tree.cpp">
-      <Filter>ソース ファイル\field</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Private\renderer.cpp">
-      <Filter>ソース ファイル\renderer</Filter>
     </ClCompile>
     <ClCompile Include="Source\Private\particle.cpp">
       <Filter>ソース ファイル\player</Filter>
@@ -197,10 +218,19 @@
     <ClCompile Include="Source\Private\UI.cpp">
       <Filter>ソース ファイル\player</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Private\renderer.cpp">
+      <Filter>ソース ファイル\renderer</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Private\light.cpp">
       <Filter>ソース ファイル\renderer</Filter>
     </ClCompile>
-    <ClCompile Include="dissolve.cpp">
+    <ClCompile Include="Source\Private\sprite.cpp">
+      <Filter>ソース ファイル\renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Private\sound.cpp">
+      <Filter>ソース ファイル\sound</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Private\dissolve.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>
