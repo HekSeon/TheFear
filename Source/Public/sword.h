@@ -63,4 +63,3 @@ SWORD* GetSword(void);
 void SetSwordPos(XMFLOAT3 offset, float rotX, float rotY, float rotZ);
 
 void AttackNearestEnemy();
-

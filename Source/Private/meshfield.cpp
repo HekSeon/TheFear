@@ -34,7 +34,7 @@ static int            g_nNumPolygonField;                        // 総ポリゴ
 static float          g_fBlockSizeXField, g_fBlockSizeZField;    // ブロックサイズ
 
 static char* g_TextureName[] = {
-    "data/TEXTURE/field004.jpg",
+    "data/TEXTURE/field005.jpg",
     "data/TEXTURE/field002.jpg",
 };
 

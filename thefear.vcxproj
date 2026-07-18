@@ -154,6 +154,7 @@
     <ClInclude Include="Source\Public\renderer.h" />
     <ClInclude Include="Source\Public\result.h" />
     <ClInclude Include="Source\Public\score.h" />
+    <ClInclude Include="Source\Public\sea.h" />
     <ClInclude Include="Source\Public\shadow.h" />
     <ClInclude Include="Source\Public\skydome.h" />
     <ClInclude Include="Source\Public\sound.h" />
@@ -183,6 +184,7 @@
     <ClCompile Include="Source\Private\renderer.cpp" />
     <ClCompile Include="Source\Private\result.cpp" />
     <ClCompile Include="Source\Private\score.cpp" />
+    <ClCompile Include="Source\Private\sea.cpp" />
     <ClCompile Include="Source\Private\shadow.cpp" />
     <ClCompile Include="Source\Private\skydome.cpp" />
     <ClCompile Include="Source\Private\sound.cpp" />

@@ -150,6 +150,9 @@
     <ClInclude Include="dissolve.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="Source\Public\sea.h">
+      <Filter>ヘッダー ファイル\field</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Private\main.cpp">
@@ -232,6 +235,9 @@
     </ClCompile>
     <ClCompile Include="Source\Private\dissolve.cpp">
       <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Private\sea.cpp">
+      <Filter>ソース ファイル\field</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

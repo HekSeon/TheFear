@@ -20,6 +20,7 @@
 #include "meshfield.h"
 #include "tree.h"
 #include "shadow.h"
+#include "sea.h"
 
 #include "debugproc.h"
 
@@ -54,6 +55,8 @@ HRESULT InitGame(void)
 	g_ViewPortType_Game = TYPE_FULL_SCREEN;
 
 	InitMeshField(XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f), 200, 200, 130.0f, 130.0f);
+
+	InitSea(XMFLOAT3(0.0f, -20.0f, 0.0f), 5, 5, 50, 50, 130.0f, 130.0f); 
 
 	InitSkydome();
 
@@ -96,6 +99,8 @@ void UninitGame(void)
 
 	UninitTree();
 
+	UninitSea();
+
 	UninitMeshField();
 
 	UninitSkydome();
@@ -111,6 +116,8 @@ void UninitGame(void)
 void UpdateGame(void)
 {
 	UpdateMeshField();
+
+	UpdateSea();
 
 	UpdateTree();
 
@@ -156,6 +163,8 @@ void UpdateGame(void)
 void DrawGame0(void)
 {
 	DrawMeshField();
+
+	DrawSea();
 
 	DrawTree();
 
