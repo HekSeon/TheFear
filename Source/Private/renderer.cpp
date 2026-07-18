@@ -601,10 +601,21 @@ HRESULT InitRenderer(HINSTANCE hInstance, HWND hWnd, BOOL bWindow)
 	shFlag = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
 #endif
 
-	hr = D3DX11CompileFromFile( "shader.hlsl", NULL, NULL, "VertexShaderPolygon", "vs_4_0", shFlag, 0, NULL, &pVSBlob, &pErrorBlob, NULL );
-	if( FAILED(hr) )
+	hr = D3DX11CompileFromFile("shader.hlsl", NULL, NULL, "VertexShaderPolygon", "vs_4_0", shFlag, 0, NULL, &pVSBlob, &pErrorBlob, NULL);
+	if (FAILED(hr))
 	{
-		MessageBox( NULL , (char*)pErrorBlob->GetBufferPointer(), "VS", MB_OK | MB_ICONERROR );
+		if (pErrorBlob)
+		{
+			MessageBox(NULL, (char*)pErrorBlob->GetBufferPointer(), "VS Shader Error", MB_OK | MB_ICONERROR);
+			pErrorBlob->Release();
+		}
+		else
+		{
+			char msg[256];
+			sprintf_s(msg, "shader.hlsl bulunamadi veya acilamadi. HRESULT: 0x%08X", hr);
+			MessageBox(NULL, msg, "VS Shader Error - Dosya Bulunamadi", MB_OK | MB_ICONERROR);
+		}
+		return E_FAIL;  // pVSBlob null iken CreateVertexShader'a devam etmesin
 	}
 
 	g_D3DDevice->CreateVertexShader( pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), NULL, &g_VertexShader );
