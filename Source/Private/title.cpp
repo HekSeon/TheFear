@@ -1,4 +1,11 @@
-﻿#include "main.h"
+﻿//=============================================================================
+//
+// タイトル処理 [tittle.cpp]
+// Author : BAYAR "HekSeon" SEMIH
+//
+//=============================================================================
+
+#include "main.h"
 #include "renderer.h"
 #include "input.h"
 #include "fade.h"

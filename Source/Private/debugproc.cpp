@@ -2,7 +2,7 @@
 // 
 // debugproc.cpp
 // 
-// Author: HekSeon
+// Author: BAYAR "HekSeon" SEMIH
 ///////////////////////////////////
 #include <stdio.h>
 #include "debugproc.h"

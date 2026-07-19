@@ -2,7 +2,7 @@
 // 
 // input.cpp
 // 
-// Author: HekSeon
+// Author: BAYAR "HekSeon" SEMIH
 ///////////////////////////////////
 #include "main.h"
 #include "input.h"

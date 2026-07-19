@@ -1,64 +1,64 @@
-//=============================================================================
+Ôªø///////////////////////////////////////////////////////////////////////////////
 //
-// ÉÇÉfÉãÇÃèàóù [model.cpp]
-// Author : 
+// „É¢„Éá„É´„ÅÆÂá¶ÁêÜ [model.cpp]
+// Author: BAYAR "HekSeon" SEMIH
 //
-//=============================================================================
+///////////////////////////////////////////////////////////////////////////////
 #define _CRT_SECURE_NO_WARNINGS
 #include "main.h"
 #include "model.h"
 #include "camera.h"
 
 //*****************************************************************************
-// É}ÉNÉçíËã`
+// „Éû„ÇØ„É≠ÂÆöÁæ©
 //*****************************************************************************
-#define	VALUE_MOVE_MODEL	(0.50f)					// à⁄ìÆë¨ìx
-#define	RATE_MOVE_MODEL		(0.20f)					// à⁄ìÆäµê´åWêî
-#define	VALUE_ROTATE_MODEL	(XM_PI * 0.05f)			// âÒì]ë¨ìx
-#define	RATE_ROTATE_MODEL	(0.20f)					// âÒì]äµê´åWêî
-#define	SCALE_MODEL			(10.0f)					// âÒì]äµê´åWêî
+#define    VALUE_MOVE_MODEL     (0.50f)                    // ÁßªÂãïÈÄüÂ∫¶
+#define    RATE_MOVE_MODEL      (0.20f)                    // ÁßªÂãïÊÖ£ÊÄß‰øÇÊï∞
+#define    VALUE_ROTATE_MODEL   (XM_PI * 0.05f)            // ÂõûËª¢ÈÄüÂ∫¶
+#define    RATE_ROTATE_MODEL    (0.20f)                    // ÂõûËª¢ÊÖ£ÊÄß‰øÇÊï∞
+#define    SCALE_MODEL          (10.0f)                    // „É¢„Éá„É´„Çπ„Ç±„Éº„É´
 
 
 //*****************************************************************************
-// ç\ë¢ëÃíËã`
+// ÊßãÈÄ†‰ΩìÂÆöÁæ©
 //*****************************************************************************
 
-// É}ÉeÉäÉAÉãç\ë¢ëÃ
+// „Éû„ÉÜ„É™„Ç¢„É´ÊßãÈÄ†‰Ωì
 struct MODEL_MATERIAL
 {
-	char						Name[256];
-	MATERIAL					Material;
-	char						TextureName[256];
+    char                        Name[256];
+    MATERIAL                    Material;
+    char                        TextureName[256];
 };
 
-// ï`âÊÉTÉuÉZÉbÉgç\ë¢ëÃ
+// ÊèèÁîª„Çµ„Éñ„Çª„ÉÉ„ÉàÊßãÈÄ†‰Ωì
 struct SUBSET
 {
-	unsigned short	StartIndex;
-	unsigned short	IndexNum;
-	MODEL_MATERIAL	Material;
+    unsigned short    StartIndex;
+    unsigned short    IndexNum;
+    MODEL_MATERIAL    Material;
 };
 
-// ÉÇÉfÉãç\ë¢ëÃ
+// „É¢„Éá„É´ÊßãÈÄ†‰Ωì
 struct MODEL
 {
-	VERTEX_3D		*VertexArray;
-	unsigned short	 VertexNum;
-	unsigned short	*IndexArray;
-	unsigned short	 IndexNum;
-	SUBSET			*SubsetArray;
-	unsigned short	 SubsetNum;
+    VERTEX_3D* VertexArray;
+    unsigned short     VertexNum;
+    unsigned short* IndexArray;
+    unsigned short     IndexNum;
+    SUBSET* SubsetArray;
+    unsigned short     SubsetNum;
 };
 
 
 
 //*****************************************************************************
-// ÉOÉçÅ[ÉoÉãïœêî
+// „Ç∞„É≠„Éº„Éê„É´Â§âÊï∞
 //*****************************************************************************
 
 
 //*****************************************************************************
-// ÉvÉçÉgÉ^ÉCÉvêÈåæ
+// „Éó„É≠„Éà„Çø„Ç§„ÉóÂÆ£Ë®Ä
 //*****************************************************************************
 void LoadObj(char* FileName, MODEL* Model);
 void LoadMaterial(char* FileName, MODEL_MATERIAL** MaterialArray, unsigned short* MaterialNum);
@@ -67,558 +67,518 @@ void LoadMaterial(char* FileName, MODEL_MATERIAL** MaterialArray, unsigned short
 
 
 //=============================================================================
-// èâä˙âªèàóù
+// ÂàùÊúüÂåñÂá¶ÁêÜ
 //=============================================================================
 void LoadModel(char* FileName, DX11_MODEL* Model)
 {
-	MODEL model;
+    MODEL model;
 
-	LoadObj(FileName, &model);
+    LoadObj(FileName, &model);
 
-	// í∏ì_ÉoÉbÉtÉ@ê∂ê¨
-	{
-		D3D11_BUFFER_DESC bd;
-		ZeroMemory(&bd, sizeof(bd));
-		bd.Usage = D3D11_USAGE_DEFAULT;
-		bd.ByteWidth = sizeof(VERTEX_3D) * model.VertexNum;
-		bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-		bd.CPUAccessFlags = 0;
+    // È†ÇÁÇπ„Éê„ÉÉ„Éï„Ç°ÁîüÊàê
+    {
+        D3D11_BUFFER_DESC bd;
+        ZeroMemory(&bd, sizeof(bd));
+        bd.Usage = D3D11_USAGE_DEFAULT;
+        bd.ByteWidth = sizeof(VERTEX_3D) * model.VertexNum;
+        bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+        bd.CPUAccessFlags = 0;
 
-		D3D11_SUBRESOURCE_DATA sd;
-		ZeroMemory(&sd, sizeof(sd));
-		sd.pSysMem = model.VertexArray;
+        D3D11_SUBRESOURCE_DATA sd;
+        ZeroMemory(&sd, sizeof(sd));
+        sd.pSysMem = model.VertexArray;
 
-		GetDevice()->CreateBuffer(&bd, &sd, &Model->VertexBuffer);
-	}
-
-
-	// ÉCÉìÉfÉbÉNÉXÉoÉbÉtÉ@ê∂ê¨
-	{
-		D3D11_BUFFER_DESC bd;
-		ZeroMemory(&bd, sizeof(bd));
-		bd.Usage = D3D11_USAGE_DEFAULT;
-		bd.ByteWidth = sizeof(unsigned short) * model.IndexNum;
-		bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
-		bd.CPUAccessFlags = 0;
-
-		D3D11_SUBRESOURCE_DATA sd;
-		ZeroMemory(&sd, sizeof(sd));
-		sd.pSysMem = model.IndexArray;
-
-		GetDevice()->CreateBuffer(&bd, &sd, &Model->IndexBuffer);
-	}
-
-	// ÉTÉuÉZÉbÉgê›íË
-	{
-		Model->SubsetArray = new DX11_SUBSET[model.SubsetNum];
-		Model->SubsetNum = model.SubsetNum;
-		Model->SubsetArray[0].Material.Texture = NULL;
-
-		for (unsigned short i = 0; i < model.SubsetNum; i++)
-		{
-			Model->SubsetArray[i].StartIndex = model.SubsetArray[i].StartIndex;
-			Model->SubsetArray[i].IndexNum = model.SubsetArray[i].IndexNum;
-
-			Model->SubsetArray[i].Material.Material = model.SubsetArray[i].Material.Material;
-
-			Model->SubsetArray[i].Material.Texture = NULL;
-			D3DX11CreateShaderResourceViewFromFile(GetDevice(),
-				model.SubsetArray[i].Material.TextureName,
-				NULL,
-				NULL,
-				&Model->SubsetArray[i].Material.Texture,
-				NULL);
-		}
-	}
-
-	delete[] model.VertexArray;
-	delete[] model.IndexArray;
-	delete[] model.SubsetArray;
+        GetDevice()->CreateBuffer(&bd, &sd, &Model->VertexBuffer);
+    }
 
 
+    // „Ç§„É≥„Éá„ÉÉ„ÇØ„Çπ„Éê„ÉÉ„Éï„Ç°ÁîüÊàê
+    {
+        D3D11_BUFFER_DESC bd;
+        ZeroMemory(&bd, sizeof(bd));
+        bd.Usage = D3D11_USAGE_DEFAULT;
+        bd.ByteWidth = sizeof(unsigned short) * model.IndexNum;
+        bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
+        bd.CPUAccessFlags = 0;
+
+        D3D11_SUBRESOURCE_DATA sd;
+        ZeroMemory(&sd, sizeof(sd));
+        sd.pSysMem = model.IndexArray;
+
+        GetDevice()->CreateBuffer(&bd, &sd, &Model->IndexBuffer);
+    }
+
+    // „Çµ„Éñ„Çª„ÉÉ„ÉàË®≠ÂÆö
+    {
+        Model->SubsetArray = new DX11_SUBSET[model.SubsetNum];
+        Model->SubsetNum = model.SubsetNum;
+        Model->SubsetArray[0].Material.Texture = NULL;
+
+        for (unsigned short i = 0; i < model.SubsetNum; i++)
+        {
+            Model->SubsetArray[i].StartIndex = model.SubsetArray[i].StartIndex;
+            Model->SubsetArray[i].IndexNum = model.SubsetArray[i].IndexNum;
+
+            Model->SubsetArray[i].Material.Material = model.SubsetArray[i].Material.Material;
+
+            Model->SubsetArray[i].Material.Texture = NULL;
+            D3DX11CreateShaderResourceViewFromFile(GetDevice(),
+                model.SubsetArray[i].Material.TextureName,
+                NULL,
+                NULL,
+                &Model->SubsetArray[i].Material.Texture,
+                NULL);
+        }
+    }
+
+    delete[] model.VertexArray;
+    delete[] model.IndexArray;
+    delete[] model.SubsetArray;
 }
 
 
 //=============================================================================
-// èIóπèàóù
+// ÁµÇ‰∫ÜÂá¶ÁêÜ
 //=============================================================================
 void UnloadModel(DX11_MODEL* Model)
 {
+    for (unsigned short i = 0; i < Model->SubsetNum; i++)
+    {
+        if (Model->SubsetArray[i].Material.Texture)
+        {
+            Model->SubsetArray[i].Material.Texture->Release();
+            Model->SubsetArray[i].Material.Texture = NULL;
+        }
+    }
 
-	for (unsigned short i = 0; i < Model->SubsetNum; i++)
-	{
-		if (Model->SubsetArray[i].Material.Texture)
-		{
-			Model->SubsetArray[i].Material.Texture->Release();
-			Model->SubsetArray[i].Material.Texture = NULL;
-		}
-	}
-
-	if (Model->VertexBuffer)		Model->VertexBuffer->Release();
-	if (Model->IndexBuffer)		Model->IndexBuffer->Release();
-	if (Model->SubsetArray)		delete[] Model->SubsetArray;
+    if (Model->VertexBuffer)        Model->VertexBuffer->Release();
+    if (Model->IndexBuffer)         Model->IndexBuffer->Release();
+    if (Model->SubsetArray)         delete[] Model->SubsetArray;
 }
 
 
 //=============================================================================
-// ï`âÊèàóù
+// ÊèèÁîªÂá¶ÁêÜ
 //=============================================================================
 void DrawModel(DX11_MODEL* Model)
 {
+    // È†ÇÁÇπ„Éê„ÉÉ„Éï„Ç°Ë®≠ÂÆö
+    UINT stride = sizeof(VERTEX_3D);
+    UINT offset = 0;
+    GetDeviceContext()->IASetVertexBuffers(0, 1, &Model->VertexBuffer, &stride, &offset);
 
-	// í∏ì_ÉoÉbÉtÉ@ê›íË
-	UINT stride = sizeof(VERTEX_3D);
-	UINT offset = 0;
-	GetDeviceContext()->IASetVertexBuffers(0, 1, &Model->VertexBuffer, &stride, &offset);
+    // „Ç§„É≥„Éá„ÉÉ„ÇØ„Çπ„Éê„ÉÉ„Éï„Ç°Ë®≠ÂÆö
+    GetDeviceContext()->IASetIndexBuffer(Model->IndexBuffer, DXGI_FORMAT_R16_UINT, 0);
 
-	// ÉCÉìÉfÉbÉNÉXÉoÉbÉtÉ@ê›íË
-	GetDeviceContext()->IASetIndexBuffer(Model->IndexBuffer, DXGI_FORMAT_R16_UINT, 0);
+    // „Éó„É™„Éü„ÉÜ„Ç£„Éñ„Éà„Éù„É≠„Ç∏„ÉºË®≠ÂÆö
+    GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-	// ÉvÉäÉ~ÉeÉBÉuÉgÉ|ÉçÉWê›íË
-	GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    for (unsigned short i = 0; i < Model->SubsetNum; i++)
+    {
+        // „Éû„ÉÜ„É™„Ç¢„É´Ë®≠ÂÆö
+        SetMaterial(Model->SubsetArray[i].Material.Material);
 
-	for (unsigned short i = 0; i < Model->SubsetNum; i++)
-	{
-		// É}ÉeÉäÉAÉãê›íË
-		SetMaterial(Model->SubsetArray[i].Material.Material);
+        // „ÉÜ„ÇØ„Çπ„ÉÅ„É£Ë®≠ÂÆö
+        if (Model->SubsetArray[i].Material.Material.noTexSampling == 0)
+        {
+            GetDeviceContext()->PSSetShaderResources(0, 1, &Model->SubsetArray[i].Material.Texture);
+        }
 
-		// ÉeÉNÉXÉ`ÉÉê›íË
-		if (Model->SubsetArray[i].Material.Material.noTexSampling == 0)
-		{
-			GetDeviceContext()->PSSetShaderResources(0, 1, &Model->SubsetArray[i].Material.Texture);
-		}
-
-		// É|ÉäÉSÉìï`âÊ
-		GetDeviceContext()->DrawIndexed(Model->SubsetArray[i].IndexNum, Model->SubsetArray[i].StartIndex, 0);
-	}
-
-
+        // „Éù„É™„Ç¥„É≥ÊèèÁîª
+        GetDeviceContext()->DrawIndexed(Model->SubsetArray[i].IndexNum, Model->SubsetArray[i].StartIndex, 0);
+    }
 }
 
 
-
-
-
-//ÉÇÉfÉãì«çû////////////////////////////////////////////
+// „É¢„Éá„É´Ë™≠„ÅøËæº„Åø////////////////////////////////////////////
 void LoadObj(char* FileName, MODEL* Model)
 {
+    XMFLOAT3* positionArray;
+    XMFLOAT3* normalArray;
+    XMFLOAT2* texcoordArray;
 
-	XMFLOAT3* positionArray;
-	XMFLOAT3* normalArray;
-	XMFLOAT2* texcoordArray;
+    unsigned short    positionNum = 0;
+    unsigned short    normalNum = 0;
+    unsigned short    texcoordNum = 0;
+    unsigned short    vertexNum = 0;
+    unsigned short    indexNum = 0;
+    unsigned short    in = 0;
+    unsigned short    subsetNum = 0;
 
-	unsigned short	positionNum = 0;
-	unsigned short	normalNum = 0;
-	unsigned short	texcoordNum = 0;
-	unsigned short	vertexNum = 0;
-	unsigned short	indexNum = 0;
-	unsigned short	in = 0;
-	unsigned short	subsetNum = 0;
+    MODEL_MATERIAL* materialArray = NULL;
+    unsigned short    materialNum = 0;
 
-	MODEL_MATERIAL* materialArray = NULL;
-	unsigned short	materialNum = 0;
+    char str[256];
+    char* s;
+    char c;
 
-	char str[256];
-	char* s;
-	char c;
+    FILE* file;
+    file = fopen(FileName, "rt");
+    if (file == NULL)
+    {
+        printf("„Ç®„É©„Éº:LoadModel %s \n", FileName);
+        return;
+    }
 
+    // Ë¶ÅÁ¥†Êï∞„Ç´„Ç¶„É≥„Éà
+    {
+        while (TRUE)
+        {
+            fscanf(file, "%s", str);
 
-	FILE* file;
-	file = fopen(FileName, "rt");
-	if (file == NULL)
-	{
-		printf("ÉGÉâÅ[:LoadModel %s \n", FileName);
-		return;
-	}
+            if (feof(file) != 0)
+                break;
 
+            if (strcmp(str, "v") == 0)
+            {
+                positionNum++;
+            }
+            else if (strcmp(str, "vn") == 0)
+            {
+                normalNum++;
+            }
+            else if (strcmp(str, "vt") == 0)
+            {
+                texcoordNum++;
+            }
+            else if (strcmp(str, "usemtl") == 0)
+            {
+                subsetNum++;
+            }
+            else if (strcmp(str, "f") == 0)
+            {
+                in = 0;
 
+                do
+                {
+                    fscanf(file, "%s", str);
+                    vertexNum++;
+                    in++;
+                    c = fgetc(file);
+                } while (c != '\n' && c != '\r');
 
-	//óvëfêîÉJÉEÉìÉg
-	while (TRUE)
-	{
-		fscanf(file, "%s", str);
+                // ÂõõËßí„ÅØ‰∏âËßí„Å´ÂàÜÂâ≤
+                if (in == 4)
+                    in = 6;
 
-		if (feof(file) != 0)
-			break;
+                indexNum += in;
+            }
+        }
+    }
 
-		if (strcmp(str, "v") == 0)
-		{
-			positionNum++;
-		}
-		else if (strcmp(str, "vn") == 0)
-		{
-			normalNum++;
-		}
-		else if (strcmp(str, "vt") == 0)
-		{
-			texcoordNum++;
-		}
-		else if (strcmp(str, "usemtl") == 0)
-		{
-			subsetNum++;
-		}
-		else if (strcmp(str, "f") == 0)
-		{
-			in = 0;
+    // „É°„É¢„É™Á¢∫‰øù
+    positionArray = new XMFLOAT3[positionNum];
+    normalArray = new XMFLOAT3[normalNum];
+    texcoordArray = new XMFLOAT2[texcoordNum];
 
-			do
-			{
-				fscanf(file, "%s", str);
-				vertexNum++;
-				in++;
-				c = fgetc(file);
-			} while (c != '\n' && c != '\r');
+    Model->VertexArray = new VERTEX_3D[vertexNum];
+    Model->VertexNum = vertexNum;
 
-			//éläpÇÕéOäpÇ…ï™äÑ
-			if (in == 4)
-				in = 6;
+    Model->IndexArray = new unsigned short[indexNum];
+    Model->IndexNum = indexNum;
 
-			indexNum += in;
-		}
-	}
+    Model->SubsetArray = new SUBSET[subsetNum];
+    Model->SubsetNum = subsetNum;
 
+    // Ë¶ÅÁ¥†Ë™≠„ÅøËæº„Åø
+    XMFLOAT3* position = positionArray;
+    XMFLOAT3* normal = normalArray;
+    XMFLOAT2* texcoord = texcoordArray;
 
-	//ÉÅÉÇÉäämï€
-	positionArray = new XMFLOAT3[positionNum];
-	normalArray = new XMFLOAT3[normalNum];
-	texcoordArray = new XMFLOAT2[texcoordNum];
+    unsigned short vc = 0;
+    unsigned short ic = 0;
+    unsigned short sc = 0;
 
+    fseek(file, 0, SEEK_SET);
 
-	Model->VertexArray = new VERTEX_3D[vertexNum];
-	Model->VertexNum = vertexNum;
+    while (TRUE)
+    {
+        fscanf(file, "%s", str);
 
-	Model->IndexArray = new unsigned short[indexNum];
-	Model->IndexNum = indexNum;
+        if (feof(file) != 0)
+            break;
 
-	Model->SubsetArray = new SUBSET[subsetNum];
-	Model->SubsetNum = subsetNum;
+        if (strcmp(str, "mtllib") == 0)
+        {
+            // „Éû„ÉÜ„É™„Ç¢„É´„Éï„Ç°„Ç§„É´
+            fscanf(file, "%s", str);
 
+            char path[256];
 
+            // ----------------------------------- „Éï„Ç©„É´„ÉÄÂØæÂøú
+            strcpy(path, FileName);
+            char* adr = path;
+            char* ans = adr;
+            while (1)
+            {
+                adr = strstr(adr, "/");
+                if (adr == NULL) break;
+                else ans = adr;
+                adr++;
+            }
+            if (path != ans) ans++;
+            *ans = 0;
+            // -----------------------------------
 
+            strcat(path, str);
+            LoadMaterial(path, &materialArray, &materialNum);
+        }
+        else if (strcmp(str, "o") == 0)
+        {
+            // „Ç™„Éñ„Ç∏„Çß„ÇØ„ÉàÂêç
+            fscanf(file, "%s", str);
+        }
+        else if (strcmp(str, "v") == 0)
+        {
+            // È†ÇÁÇπÂ∫ßÊ®ô
+            fscanf(file, "%f", &position->x);
+            fscanf(file, "%f", &position->y);
+            fscanf(file, "%f", &position->z);
+            position->x *= SCALE_MODEL;
+            position->y *= SCALE_MODEL;
+            position->z *= SCALE_MODEL;
+            position++;
+        }
+        else if (strcmp(str, "vn") == 0)
+        {
+            // Ê≥ïÁ∑ö
+            fscanf(file, "%f", &normal->x);
+            fscanf(file, "%f", &normal->y);
+            fscanf(file, "%f", &normal->z);
+            normal++;
+        }
+        else if (strcmp(str, "vt") == 0)
+        {
+            // „ÉÜ„ÇØ„Çπ„ÉÅ„É£Â∫ßÊ®ô
+            fscanf(file, "%f", &texcoord->x);
+            fscanf(file, "%f", &texcoord->y);
+            texcoord->y = 1.0f - texcoord->y;
+            texcoord++;
+        }
+        else if (strcmp(str, "usemtl") == 0)
+        {
+            // „Éû„ÉÜ„É™„Ç¢„É´
+            fscanf(file, "%s", str);
 
-	//óvëfì«çû
-	XMFLOAT3* position = positionArray;
-	XMFLOAT3* normal = normalArray;
-	XMFLOAT2* texcoord = texcoordArray;
+            if (sc != 0)
+                Model->SubsetArray[sc - 1].IndexNum = ic - Model->SubsetArray[sc - 1].StartIndex;
 
-	unsigned short vc = 0;
-	unsigned short ic = 0;
-	unsigned short sc = 0;
+            Model->SubsetArray[sc].StartIndex = ic;
 
+            for (unsigned short i = 0; i < materialNum; i++)
+            {
+                if (strcmp(str, materialArray[i].Name) == 0)
+                {
+                    Model->SubsetArray[sc].Material.Material = materialArray[i].Material;
+                    strcpy(Model->SubsetArray[sc].Material.TextureName, materialArray[i].TextureName);
+                    strcpy(Model->SubsetArray[sc].Material.Name, materialArray[i].Name);
+                    break;
+                }
+            }
+            sc++;
+        }
+        else if (strcmp(str, "f") == 0)
+        {
+            // Èù¢
+            in = 0;
 
-	fseek(file, 0, SEEK_SET);
+            do
+            {
+                fscanf(file, "%s", str);
 
-	while (TRUE)
-	{
-		fscanf(file, "%s", str);
+                s = strtok(str, "/");
+                Model->VertexArray[vc].Position = positionArray[atoi(s) - 1];
+                if (s[strlen(s) + 1] != '/')
+                {
+                    // „ÉÜ„ÇØ„Çπ„ÉÅ„É£Â∫ßÊ®ô„ÅåÂ≠òÂú®„Åó„Å™„ÅÑÂ†¥Âêà„ÇÇ„ÅÇ„Çã
+                    s = strtok(NULL, "/");
+                    Model->VertexArray[vc].TexCoord = texcoordArray[atoi(s) - 1];
+                }
+                s = strtok(NULL, "/");
+                Model->VertexArray[vc].Normal = normalArray[atoi(s) - 1];
 
-		if (feof(file) != 0)
-			break;
+                Model->VertexArray[vc].Diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 
-		if (strcmp(str, "mtllib") == 0)
-		{
-			//É}ÉeÉäÉAÉãÉtÉ@ÉCÉã
-			fscanf(file, "%s", str);
+                Model->IndexArray[ic] = vc;
+                ic++;
+                vc++;
 
-			char path[256];
-			//	strcpy( path, "data/model/" );
+                in++;
+                c = fgetc(file);
+            } while (c != '\n' && c != '\r');
 
-				//----------------------------------- ÉtÉHÉãÉ_Å[ëŒâû
-			strcpy(path, FileName);
-			char* adr = path;
-			char* ans = adr;
-			while (1)
-			{
-				adr = strstr(adr, "/");
-				if (adr == NULL) break;
-				else ans = adr;
-				adr++;
-			}
-			if (path != ans) ans++;
-			*ans = 0;
-			//-----------------------------------
+            // ÂõõËßí„ÅØ‰∏âËßí„Å´ÂàÜÂâ≤
+            if (in == 4)
+            {
+                Model->IndexArray[ic] = vc - 4;
+                ic++;
+                Model->IndexArray[ic] = vc - 2;
+                ic++;
+            }
+        }
+    }
 
-			strcat(path, str);
+    if (sc != 0)
+        Model->SubsetArray[sc - 1].IndexNum = ic - Model->SubsetArray[sc - 1].StartIndex;
 
-			LoadMaterial(path, &materialArray, &materialNum);
-		}
-		else if (strcmp(str, "o") == 0)
-		{
-			//ÉIÉuÉWÉFÉNÉgñº
-			fscanf(file, "%s", str);
-		}
-		else if (strcmp(str, "v") == 0)
-		{
-			//í∏ì_ç¿ïW
-			fscanf(file, "%f", &position->x);
-			fscanf(file, "%f", &position->y);
-			fscanf(file, "%f", &position->z);
-			position->x *= SCALE_MODEL;
-			position->y *= SCALE_MODEL;
-			position->z *= SCALE_MODEL;
-			position++;
-		}
-		else if (strcmp(str, "vn") == 0)
-		{
-			//ñ@ê¸
-			fscanf(file, "%f", &normal->x);
-			fscanf(file, "%f", &normal->y);
-			fscanf(file, "%f", &normal->z);
-			normal++;
-		}
-		else if (strcmp(str, "vt") == 0)
-		{
-			//ÉeÉNÉXÉ`ÉÉç¿ïW
-			fscanf(file, "%f", &texcoord->x);
-			fscanf(file, "%f", &texcoord->y);
-			texcoord->y = 1.0f - texcoord->y;
-			texcoord++;
-		}
-		else if (strcmp(str, "usemtl") == 0)
-		{
-			//É}ÉeÉäÉAÉã
-			fscanf(file, "%s", str);
+    delete[] positionArray;
+    delete[] normalArray;
+    delete[] texcoordArray;
+    delete[] materialArray;
 
-			if (sc != 0)
-				Model->SubsetArray[sc - 1].IndexNum = ic - Model->SubsetArray[sc - 1].StartIndex;
-
-			Model->SubsetArray[sc].StartIndex = ic;
-
-
-			for (unsigned short i = 0; i < materialNum; i++)
-			{
-				if (strcmp(str, materialArray[i].Name) == 0)
-				{
-					Model->SubsetArray[sc].Material.Material = materialArray[i].Material;
-					strcpy(Model->SubsetArray[sc].Material.TextureName, materialArray[i].TextureName);
-					strcpy(Model->SubsetArray[sc].Material.Name, materialArray[i].Name);
-
-					break;
-				}
-			}
-
-			sc++;
-
-		}
-		else if (strcmp(str, "f") == 0)
-		{
-			//ñ 
-			in = 0;
-
-			do
-			{
-				fscanf(file, "%s", str);
-
-				s = strtok(str, "/");
-				Model->VertexArray[vc].Position = positionArray[atoi(s) - 1];
-				if (s[strlen(s) + 1] != '/')
-				{
-					//ÉeÉNÉXÉ`ÉÉç¿ïWÇ™ë∂ç›ÇµÇ»Ç¢èÍçáÇ‡Ç†ÇÈ
-					s = strtok(NULL, "/");
-					Model->VertexArray[vc].TexCoord = texcoordArray[atoi(s) - 1];
-				}
-				s = strtok(NULL, "/");
-				Model->VertexArray[vc].Normal = normalArray[atoi(s) - 1];
-
-				Model->VertexArray[vc].Diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-
-				Model->IndexArray[ic] = vc;
-				ic++;
-				vc++;
-
-				in++;
-				c = fgetc(file);
-			} while (c != '\n' && c != '\r');
-
-			//éläpÇÕéOäpÇ…ï™äÑ
-			if (in == 4)
-			{
-				Model->IndexArray[ic] = vc - 4;
-				ic++;
-				Model->IndexArray[ic] = vc - 2;
-				ic++;
-			}
-		}
-	}
-
-
-	if (sc != 0)
-		Model->SubsetArray[sc - 1].IndexNum = ic - Model->SubsetArray[sc - 1].StartIndex;
-
-
-
-
-
-	delete[] positionArray;
-	delete[] normalArray;
-	delete[] texcoordArray;
-	delete[] materialArray;
-
-	fclose(file);
+    fclose(file);
 }
 
 
 
 
-//É}ÉeÉäÉAÉãì«Ç›çûÇ›///////////////////////////////////////////////////////////////////
+// „Éû„ÉÜ„É™„Ç¢„É´Ë™≠„ÅøËæº„Åø///////////////////////////////////////////////////////////////////
 void LoadMaterial(char* FileName, MODEL_MATERIAL** MaterialArray, unsigned short* MaterialNum)
 {
-	char str[256];
+    char str[256];
 
-	FILE* file;
-	file = fopen(FileName, "rt");
-	if (file == NULL)
-	{
-		printf("ÉGÉâÅ[:LoadMaterial %s \n", FileName);
-		return;
-	}
+    FILE* file;
+    file = fopen(FileName, "rt");
+    if (file == NULL)
+    {
+        printf("„Ç®„É©„Éº:LoadMaterial %s \n", FileName);
+        return;
+    }
 
-	MODEL_MATERIAL* materialArray;
-	unsigned short materialNum = 0;
+    MODEL_MATERIAL* materialArray;
+    unsigned short materialNum = 0;
 
-	//óvëfêîÉJÉEÉìÉg
-	while (TRUE)
-	{
-		fscanf(file, "%s", str);
+    // Ë¶ÅÁ¥†Êï∞„Ç´„Ç¶„É≥„Éà
+    while (TRUE)
+    {
+        fscanf(file, "%s", str);
 
-		if (feof(file) != 0)
-			break;
+        if (feof(file) != 0)
+            break;
 
+        if (strcmp(str, "newmtl") == 0)
+        {
+            materialNum++;
+        }
+    }
 
-		if (strcmp(str, "newmtl") == 0)
-		{
-			materialNum++;
-		}
-	}
+    // „É°„É¢„É™Á¢∫‰øù
+    materialArray = new MODEL_MATERIAL[materialNum];
+    ZeroMemory(materialArray, sizeof(MODEL_MATERIAL) * materialNum);
 
+    // Ë¶ÅÁ¥†Ë™≠„ÅøËæº„Åø
+    int mc = -1;
 
-	//ÉÅÉÇÉäämï€
-	materialArray = new MODEL_MATERIAL[materialNum];
-	ZeroMemory(materialArray, sizeof(MODEL_MATERIAL) * materialNum);
+    fseek(file, 0, SEEK_SET);
 
+    while (TRUE)
+    {
+        fscanf(file, "%s", str);
 
-	//óvëfì«çû
-	int mc = -1;
+        if (feof(file) != 0)
+            break;
 
-	fseek(file, 0, SEEK_SET);
+        if (strcmp(str, "newmtl") == 0)
+        {
+            // „Éû„ÉÜ„É™„Ç¢„É´Âêç
+            mc++;
+            fscanf(file, "%s", materialArray[mc].Name);
+            strcpy(materialArray[mc].TextureName, "");
+            materialArray[mc].Material.noTexSampling = 1;
+        }
+        else if (strcmp(str, "Ka") == 0)
+        {
+            // „Ç¢„É≥„Éì„Ç®„É≥„Éà
+            fscanf(file, "%f", &materialArray[mc].Material.Ambient.x);
+            fscanf(file, "%f", &materialArray[mc].Material.Ambient.y);
+            fscanf(file, "%f", &materialArray[mc].Material.Ambient.z);
+            materialArray[mc].Material.Ambient.w = 1.0f;
+        }
+        else if (strcmp(str, "Kd") == 0)
+        {
+            // „Éá„Ç£„Éï„É•„Éº„Ç∫
+            fscanf(file, "%f", &materialArray[mc].Material.Diffuse.x);
+            fscanf(file, "%f", &materialArray[mc].Material.Diffuse.y);
+            fscanf(file, "%f", &materialArray[mc].Material.Diffuse.z);
 
-	while (TRUE)
-	{
-		fscanf(file, "%s", str);
+            // Maya„Åß„ÉÜ„ÇØ„Çπ„ÉÅ„É£„ÇíË≤º„Çã„Å®0.0f„Å´„Å™„Å£„Å¶„Åó„Åæ„ÅÜ„Åø„Åü„ÅÑ„Å™„ÅÆ„Åß
+            if ((materialArray[mc].Material.Diffuse.x + materialArray[mc].Material.Diffuse.y + materialArray[mc].Material.Diffuse.z) == 0.0f)
+            {
+                materialArray[mc].Material.Diffuse.x = materialArray[mc].Material.Diffuse.y = materialArray[mc].Material.Diffuse.z = 1.0f;
+            }
 
-		if (feof(file) != 0)
-			break;
+            materialArray[mc].Material.Diffuse.w = 1.0f;
+        }
+        else if (strcmp(str, "Ks") == 0)
+        {
+            // „Çπ„Éö„Ç≠„É•„É©„Éº
+            fscanf(file, "%f", &materialArray[mc].Material.Specular.x);
+            fscanf(file, "%f", &materialArray[mc].Material.Specular.y);
+            fscanf(file, "%f", &materialArray[mc].Material.Specular.z);
+            materialArray[mc].Material.Specular.w = 1.0f;
+        }
+        else if (strcmp(str, "Ns") == 0)
+        {
+            // „Çπ„Éö„Ç≠„É•„É©„ÉºÂº∑Â∫¶
+            fscanf(file, "%f", &materialArray[mc].Material.Shininess);
+        }
+        else if (strcmp(str, "d") == 0)
+        {
+            // „Ç¢„É´„Éï„Ç°
+            fscanf(file, "%f", &materialArray[mc].Material.Diffuse.w);
+        }
+        else if (strcmp(str, "map_Kd") == 0)
+        {
+            // „ÉÜ„ÇØ„Çπ„ÉÅ„É£
+            fscanf(file, "%s", str);
 
+            char path[256];
 
-		if (strcmp(str, "newmtl") == 0)
-		{
-			//É}ÉeÉäÉAÉãñº
-			mc++;
-			fscanf(file, "%s", materialArray[mc].Name);
-			strcpy(materialArray[mc].TextureName, "");
-			materialArray[mc].Material.noTexSampling = 1;
-		}
-		else if (strcmp(str, "Ka") == 0)
-		{
-			//ÉAÉìÉrÉGÉìÉg
-			fscanf(file, "%f", &materialArray[mc].Material.Ambient.x);
-			fscanf(file, "%f", &materialArray[mc].Material.Ambient.y);
-			fscanf(file, "%f", &materialArray[mc].Material.Ambient.z);
-			materialArray[mc].Material.Ambient.w = 1.0f;
-		}
-		else if (strcmp(str, "Kd") == 0)
-		{
-			//ÉfÉBÉtÉÖÅ[ÉY
-			fscanf(file, "%f", &materialArray[mc].Material.Diffuse.x);
-			fscanf(file, "%f", &materialArray[mc].Material.Diffuse.y);
-			fscanf(file, "%f", &materialArray[mc].Material.Diffuse.z);
+            // ----------------------------------- „Éï„Ç©„É´„ÉÄÂØæÂøú
+            strcpy(path, FileName);
+            char* adr = path;
+            char* ans = adr;
+            while (1)
+            {
+                adr = strstr(adr, "/");
+                if (adr == NULL) break;
+                else ans = adr;
+                adr++;
+            }
+            if (path != ans) ans++;
+            *ans = 0;
+            // -----------------------------------
 
-			// MayaÇ≈ÉeÉNÉXÉ`ÉÉÇì\ÇÈÇ∆0.0fÇ…Ç»Ç¡ÇøÇ·Ç§Ç›ÇΩÇ¢Ç»ÇÃÇ≈
-			if ((materialArray[mc].Material.Diffuse.x + materialArray[mc].Material.Diffuse.y + materialArray[mc].Material.Diffuse.z) == 0.0f)
-			{
-				materialArray[mc].Material.Diffuse.x = materialArray[mc].Material.Diffuse.y = materialArray[mc].Material.Diffuse.z = 1.0f;
-			}
+            strcat(path, str);
 
-			materialArray[mc].Material.Diffuse.w = 1.0f;
-		}
-		else if (strcmp(str, "Ks") == 0)
-		{
-			//ÉXÉyÉLÉÖÉâ
-			fscanf(file, "%f", &materialArray[mc].Material.Specular.x);
-			fscanf(file, "%f", &materialArray[mc].Material.Specular.y);
-			fscanf(file, "%f", &materialArray[mc].Material.Specular.z);
-			materialArray[mc].Material.Specular.w = 1.0f;
-		}
-		else if (strcmp(str, "Ns") == 0)
-		{
-			//ÉXÉyÉLÉÖÉâã≠ìx
-			fscanf(file, "%f", &materialArray[mc].Material.Shininess);
-		}
-		else if (strcmp(str, "d") == 0)
-		{
-			//ÉAÉãÉtÉ@
-			fscanf(file, "%f", &materialArray[mc].Material.Diffuse.w);
-		}
-		else if (strcmp(str, "map_Kd") == 0)
-		{
-			//ÉeÉNÉXÉ`ÉÉ
-			fscanf(file, "%s", str);
+            strcat(materialArray[mc].TextureName, path);
+            materialArray[mc].Material.noTexSampling = 0;
+        }
+    }
 
-			char path[256];
-			//	strcpy( path, "data/model/" );
+    *MaterialArray = materialArray;
+    *MaterialNum = materialNum;
 
-				//----------------------------------- ÉtÉHÉãÉ_Å[ëŒâû
-			strcpy(path, FileName);
-			char* adr = path;
-			char* ans = adr;
-			while (1)
-			{
-				adr = strstr(adr, "/");
-				if (adr == NULL) break;
-				else ans = adr;
-				adr++;
-			}
-			if (path != ans) ans++;
-			*ans = 0;
-			//-----------------------------------
-
-			strcat(path, str);
-
-			strcat(materialArray[mc].TextureName, path);
-			materialArray[mc].Material.noTexSampling = 0;
-		}
-	}
-
-
-	*MaterialArray = materialArray;
-	*MaterialNum = materialNum;
-
-	fclose(file);
+    fclose(file);
 }
 
 
-// ÉÇÉfÉãÇÃëSÉ}ÉeÉäÉAÉãÇÃÉfÉBÉtÉÖÅ[ÉYÇéÊìæÇ∑ÇÈÅBMax16å¬ï™Ç…ÇµÇƒÇ†ÇÈ
+// „É¢„Éá„É´„ÅÆÂÖ®„Éû„ÉÜ„É™„Ç¢„É´„ÅÆ„Éá„Ç£„Éï„É•„Éº„Ç∫„ÇíÂèñÂæó„Åô„Çã„ÄÇMax16ÂÄãÂàÜ„Å´„Åó„Å¶„ÅÇ„Çã
 void GetModelDiffuse(DX11_MODEL* Model, XMFLOAT4* diffuse)
 {
-	int max = (Model->SubsetNum < MODEL_MAX_MATERIAL) ? Model->SubsetNum : MODEL_MAX_MATERIAL;
+    int max = (Model->SubsetNum < MODEL_MAX_MATERIAL) ? Model->SubsetNum : MODEL_MAX_MATERIAL;
 
-	for (unsigned short i = 0; i < max; i++)
-	{
-		// ÉfÉBÉtÉÖÅ[ÉYê›íË
-		diffuse[i] = Model->SubsetArray[i].Material.Material.Diffuse;
-	}
+    for (unsigned short i = 0; i < max; i++)
+    {
+        // „Éá„Ç£„Éï„É•„Éº„Ç∫Ë®≠ÂÆö
+        diffuse[i] = Model->SubsetArray[i].Material.Material.Diffuse;
+    }
 }
 
 
-// ÉÇÉfÉãÇÃéwíËÉ}ÉeÉäÉAÉãÇÃÉfÉBÉtÉÖÅ[ÉYÇÉZÉbÉgÇ∑ÇÈÅB
+// „É¢„Éá„É´„ÅÆÊåáÂÆö„Éû„ÉÜ„É™„Ç¢„É´„ÅÆ„Éá„Ç£„Éï„É•„Éº„Ç∫„Çí„Çª„ÉÉ„Éà„Åô„Çã„ÄÇ
 void SetModelDiffuse(DX11_MODEL* Model, int mno, XMFLOAT4 diffuse)
 {
-	// ÉfÉBÉtÉÖÅ[ÉYê›íË
-	Model->SubsetArray[mno].Material.Material.Diffuse = diffuse;
+    // „Éá„Ç£„Éï„É•„Éº„Ç∫Ë®≠ÂÆö
+    Model->SubsetArray[mno].Material.Material.Diffuse = diffuse;
 }
-
-
-
-
-
-
