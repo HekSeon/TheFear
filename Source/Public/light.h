@@ -6,6 +6,8 @@
 ///////////////////////////////////
 #pragma once
 
+#include "renderer.h" // LIGHT ve FOG yapılarının tanınması için gerekli[cite: 1]
+
 ///////////////////////////////////
 // makro area
 ///////////////////////////////////
@@ -21,4 +23,3 @@ void SetFogData(FOG* fog);
 BOOL GetFogEnable(void);
 
 LIGHT* GetLightData(int index);
-

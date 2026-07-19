@@ -1,18 +1,16 @@
-﻿//============================================================================
-//
-// BAYAR SEMIH
-// 
+﻿///////////////////////////////////
 // 
 // playeranimation.h
 // 
-//============================================================================
-
-
-
-
+// Author: BAYAR "HekSeon" SEMIH
+///////////////////////////////////
 #pragma once
 
 #include <DirectXMath.h>
+
+// Yapısal döngüyü engellemek için ön bildirim[cite: 7, 8]
+struct PLAYER;
+
 using namespace DirectX;
 
 //============================================================================
@@ -35,9 +33,7 @@ struct INTERPOLATION_DATA
 };
 
 //============================================================================
-// PLAYER構造体のパーツ用構造体
 void InitPlayerAnimation(PLAYER* player);
 void UpdatePlayerAnimation(PLAYER* player);
 
 void SetPlayerAnimation(PLAYER* player, PLAYER_ANIM anim);
-

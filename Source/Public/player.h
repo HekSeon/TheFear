@@ -1,12 +1,11 @@
-﻿//============================================================================
-//
-// Author :BAYAR SEMIH
+﻿///////////////////////////////////
 // 
 // player.h
 // 
-//============================================================================
-
+// Author: BAYAR "HekSeon" SEMIH
+///////////////////////////////////
 #pragma once
+
 #include "model.h"
 
 #define MAX_PLAYER        (1)
@@ -19,8 +18,8 @@
 #define MODEL_PLAYER_RLEG "data/MODEL/bear/rightleg.obj"
 #define PLAYER_PARTS_MAX  (5)
 
-struct INTERPOLATION_DATA; // forward declaration
-struct PLAYER;              // forward declaration, PLAYER_PART içinde pointer kullanmak için
+struct INTERPOLATION_DATA; // forward declaration[cite: 7]
+struct PLAYER;              // forward declaration, PLAYER_PART içinde pointer kullanmak için[cite: 7]
 
 struct PLAYER_PART
 {
@@ -35,7 +34,7 @@ struct PLAYER_PART
     INTERPOLATION_DATA* tbl;
     BOOL use;
     BOOL load;
-    PLAYER* parent; // pointer olduğu için forward declaration yeterli
+    PLAYER* parent; // pointer olduğu için forward declaration yeterli[cite: 7]
 };
 
 struct PLAYER
@@ -51,7 +50,7 @@ struct PLAYER
     float spd;
     float dir;
     float size;
-	float health;
+    float health;
     int shadowIdx;
     BOOL use;
     BOOL move;
@@ -64,7 +63,7 @@ struct PLAYER
     XMFLOAT3 UpVector;
 };
 
-// Prototipler
+// Prototipler[cite: 7]
 HRESULT InitPlayer(void);
 void UninitPlayer(void);
 void UpdatePlayer(void);

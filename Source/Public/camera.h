@@ -2,7 +2,7 @@
 // 
 // camera.h
 // 
-// Author : HekSeon
+// Author: BAYAR "HekSeon" SEMIH
 // 
 ///////////////////////////////////
 #pragma once
