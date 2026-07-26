@@ -67,7 +67,7 @@ HRESULT InitGame(void)
 	InitTree();
 
 
-	//InitEnemy();
+	InitEnemy();
 
 	InitScore();
 

@@ -138,7 +138,7 @@ void UpdateEnemy(void)
 
 		if (CollisionBB(g_Enemies[i].pos, 1.f, 1.f, player->pos, 1.f, 1.f))
 		{
-			player->health -= 1; // Oyuncunun sağlığını azal
+			player->health -= 0.01; // Oyuncunun sağlığını azal
 		}
 
 	
@@ -177,7 +177,6 @@ void UpdateEnemy(void)
 		// Eski pozisyonu sakla
 		XMFLOAT3 oldPos = g_Enemies[i].pos;
 
-		// Yeni pozisyon hesapla
 		XMFLOAT3 newPos;
 		newPos.x = g_Enemies[i].pos.x + direction.x * speed;
 		newPos.z = g_Enemies[i].pos.z + direction.z * speed;

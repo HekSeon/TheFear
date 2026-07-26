@@ -81,3 +81,6 @@ char* GetDebugStr(void);
 
 void SetMode(int mode);
 int GetMode(void);
+
+void EnableMouseLock(BOOL bLock);
+BOOL IsAppFocused(void);

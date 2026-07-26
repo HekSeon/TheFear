@@ -36,10 +36,9 @@ enum SwordState {
 };
 
 SwordState g_SwordState = FOLLOW_PLAYER;
-
-XMFLOAT3 g_TargetPos; // Kılıcın gitmesi gereken hedef pozisyonu
-
-float g_SwordSpeed = 1.2f; // Kılıcın hareket hızı
+XMFLOAT3 g_TargetPos;           // Kılıcın gitmesi gereken hedef pozisyonu
+float g_SwordSpeed = 1.2f;      // Kılıcın hareket hızı
+static ENEMY* g_TargetEnemy = NULL; // <-- YENİ: Takip edilen hedef düşman pointer'ı
 
 
 //*****************************************************************************
@@ -174,53 +173,62 @@ void UpdateSword(void)
 
 	else if (g_SwordState == ATTACK_ENEMY)
 	{
-		XMVECTOR swordPos = XMLoadFloat3(&g_Sword.pos);
-		XMVECTOR targetPos = XMLoadFloat3(&g_TargetPos);
-		XMVECTOR direction = XMVectorSubtract(targetPos, swordPos);
-
-		if (XMVectorGetX(XMVector3Length(direction)) < 0.01f)
+		// --- YENİ: Düşman hareket halindeyse hedef pozisyonunu her kare güncelle ---
+		if (g_TargetEnemy != NULL && g_TargetEnemy->use && g_TargetEnemy->isAlive)
 		{
-			g_SwordState = FOLLOW_PLAYER;
-			return;
+			g_TargetPos = g_TargetEnemy->pos;
 		}
-		direction = XMVector3Normalize(direction);
-		swordPos = XMVectorAdd(swordPos, XMVectorScale(direction, g_SwordSpeed));
-		XMStoreFloat3(&g_Sword.pos, swordPos);
-
-		if (CollisionBC(g_TargetPos, g_Sword.pos, 1.0f, 1.0f))
+		else
 		{
-			ENEMY* nearestEnemy = FindNearestEnemy(g_TargetPos);
-			if (nearestEnemy)
+			// Eğer hedef düşman ortadan kaybolduysa veya öldüyse, en yakın başka bir düşmana yönel veya player'a dön
+			g_TargetEnemy = FindNearestEnemy(g_Sword.pos);
+			if (g_TargetEnemy)
 			{
-				nearestEnemy->health -= 50;
-				if (nearestEnemy->health <= 0)
+				g_TargetPos = g_TargetEnemy->pos;
+			}
+			else
+			{
+				g_SwordState = FOLLOW_PLAYER;
+				return;
+			}
+		}
+		// ------------------------------------------------------------------------
+
+		XMVECTOR swordPos = XMLoadFloat4x4(&g_Sword.mtxWorld).r[3]; // Veya g_Sword.pos
+		// Yukarıdaki satırı kendi pozisyon okuma şeklinize göre koruyabilirsiniz:
+		// XMVECTOR swordPos = XMLoadFloat3(&g_Sword.pos);
+
+		XMVECTOR targetPos = XMLoadFloat4x4(&g_TargetEnemy->mtxWorld).r[3]; // Veya g_TargetPos doğrudan
+		// Biz g_TargetPos'u güncellediğimiz için doğrudan kullanabiliriz:
+		targetPos = XMLoadFloat3(&g_TargetPos);
+		XMVECTOR currentPos = XMLoadFloat3(&g_Sword.pos);
+
+		XMVECTOR direction = XMVectorSubtract(targetPos, currentPos);
+
+		// Eğer hedefe çok yaklaştıysa çarpışma / hasar verme mantığı
+		if (XMVectorGetX(XMVector3Length(direction)) < 5.0f) // Mesafe eşiğini biraz esnetebilirsiniz
+		{
+			if (g_TargetEnemy)
+			{
+				g_TargetEnemy->health -= 50;
+				if (g_TargetEnemy->health <= 0)
 				{
-					nearestEnemy->isAlive = FALSE;
-					nearestEnemy->use = FALSE;
+					g_TargetEnemy->isAlive = FALSE;
+					g_TargetEnemy->use = FALSE;
 				}
 			}
 			StartDissolveOut(&g_Sword.dissolve, 0.05f, SWORD_MIN_Y, SWORD_MAX_Y);
 			g_SwordState = DISSOLVING_OUT;
+			g_TargetEnemy = NULL; 
+		}
+		else
+		{
+			direction = XMVector3Normalize(direction);
+			currentPos = XMVectorAdd(currentPos, XMVectorScale(direction, g_SwordSpeed));
+			XMStoreFloat3(&g_Sword.pos, currentPos);
 		}
 	}
 
-	else if (g_SwordState == DISSOLVING_OUT)
-	{
-		if (g_Sword.dissolve.mode == DISSOLVE_NONE)
-		{
-			g_Sword.pos = player->pos;
-			StartDissolveIn(&g_Sword.dissolve, 0.05f, SWORD_MIN_Y, SWORD_MAX_Y);
-			g_SwordState = DISSOLVING_IN;
-		}
-
-	}
-	else if (g_SwordState == DISSOLVING_IN)
-	{
-		if (g_Sword.dissolve.mode == DISSOLVE_NONE)
-		{
-			g_SwordState = FOLLOW_PLAYER;
-		}
-	}
 
 	if (GetKeyboardTrigger(DIK_SPACE))
 	{
@@ -232,6 +240,11 @@ void UpdateSword(void)
 		if (g_SwordState == ATTACK_ENEMY)
 		{
 			g_SwordState = FOLLOW_PLAYER;
+		}
+		else
+		{
+			g_SwordState = FOLLOW_PLAYER;
+
 		}
 	}
 
