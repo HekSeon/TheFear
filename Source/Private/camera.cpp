@@ -1,82 +1,60 @@
-﻿/////////////////////////////////////
-// 
+﻿/////////////////////////////////////// 
 // camera.cpp
-// 
 // Author: BAYAR "HekSeon" SEMIH
-// 
-///////////////////////////////////
+/////////////////////////////////////// 
 #include "main.h"
 #include "input.h"
 #include "camera.h"
 #include "debugproc.h"
 #include "player.h"
 
-/////////////////////////////////////
-// makro area 
-///////////////////////////////////
+/////////////////////////////////////// makro area ///////////////////////////////////
 #define	POS_X_CAM			(10.0f)		
 #define	POS_Y_CAM			(25.0f)			
 #define	POS_Z_CAM			(-100.0f)		
-
 //#define	POS_X_CAM		(0.0f)			
 //#define	POS_Y_CAM		(200.0f)		
 //#define	POS_Z_CAM		(-400.0f)		
-
 
 #define	VIEW_ANGLE		(XMConvertToRadians(45.0f))					
 #define	VIEW_ASPECT		((float)SCREEN_WIDTH / (float)SCREEN_HEIGHT)	
 #define	VIEW_NEAR_Z		(10.0f)										
 #define	VIEW_FAR_Z		(10000.0f)	// ビュー平面のFarZ値
 
-
-
 #define	VALUE_MOVE_CAMERA	(2.0f)										
 #define	VALUE_ROTATE_CAMERA	(XM_PI * 0.01f)								
 
-/////////////////////////////////////
-// global area 
-///////////////////////////////////
-static CAMERA			g_Camera;		
-
+/////////////////////////////////////// global area ///////////////////////////////////
+static CAMERA			g_Camera;
 static int				g_ViewPortType = TYPE_FULL_SCREEN;
-
 static int lastMouseX = SCREEN_WIDTH / 2;
 static int lastMouseY = SCREEN_HEIGHT / 2;
-
 static int deltaX;
 static int deltaY;
-
-
-
 static int cameraMode = THIRD_PERSON; // Varsayılan: 3rd Person
 
-/////////////////////////////////////
-// init camera area 
-///////////////////////////////////
+/////////////////////////////////////// init camera area ///////////////////////////////////
 void InitCamera(void)
 {
 	ChangeCameraMode(cameraMode);
 }
 
-
-/////////////////////////////////////
-// uninit area area 
-///////////////////////////////////
+/////////////////////////////////////// uninit area area ///////////////////////////////////
 void UninitCamera(void)
 {
 
 }
 
-
-/////////////////////////////////////
-// update camera area 
-///////////////////////////////////
+/////////////////////////////////////// update camera area ///////////////////////////////////
 void UpdateCamera(void)
 {
-	/*if (GetKeyboardTrigger(DIK_X))
+	// 🟢 ODAK YOKSA KAMERA VE OYUN GÜNCELLEMESİNİ DURDUR
+	if (!IsAppFocused())
 	{
-		ChangeCameraMode(FIRST_PERSON);
-	}*/
+		return;
+	}
+
+	/*if (GetKeyboardTrigger(DIK_X))	{		ChangeCameraMode(FIRST_PERSON);	}*/
 
 	if (GetKeyboardTrigger(DIK_C))
 	{
@@ -89,45 +67,30 @@ void UpdateCamera(void)
 	UpdateCameraWithMouse();
 	/*ShowCursor(FALSE);*/
 
+	// Meshfield yüksekliği (örneğin Y = 0)
+	float minHeight = 0.0f;
 
-// Meshfield yüksekliği (örneğin Y = 0)
-float minHeight = 0.0f;
-
-// Kamera Y'yi sınırla
-if (g_Camera.pos.y < minHeight)
-{
-	g_Camera.pos.y = minHeight;
-}
+	// Kamera Y'yi順序 limit
+	if (g_Camera.pos.y < minHeight)
+	{
+		g_Camera.pos.y = minHeight;
+	}
 
 #ifdef _DEBUG
-
-
-	
-
 	if (GetKeyboardPress(DIK_R))
 	{
 		UninitCamera();
 		InitCamera();
 	}
-
-
-
 #endif
-
-
 
 #ifdef _DEBUG	
 	char debugInfo[128];
-
 	OutputDebugStringA(debugInfo);
-
 #endif
 }
 
-
-/////////////////////////////////////
-// set camera area 
-///////////////////////////////////
+/////////////////////////////////////// set camera area ///////////////////////////////////
 void SetCamera(void)
 {
 	XMMATRIX mtxView;
@@ -148,18 +111,13 @@ void SetCamera(void)
 	SetShaderCamera(g_Camera.pos);
 }
 
-
-/////////////////////////////////////
-// get camera area 
-///////////////////////////////////
+/////////////////////////////////////// get camera area ///////////////////////////////////
 CAMERA* GetCamera(void)
 {
 	return &g_Camera;
 }
 
-/////////////////////////////////////
-// viewport area 
-///////////////////////////////////
+/////////////////////////////////////// viewport area ///////////////////////////////////
 void SetViewPort(int type)
 {
 	ID3D11DeviceContext* g_ImmediateContext = GetDeviceContext();
@@ -213,39 +171,36 @@ void SetViewPort(int type)
 		vp.TopLeftX = 0;
 		vp.TopLeftY = (FLOAT)SCREEN_HEIGHT / 2;
 		break;
-
-
 	}
+
 	g_ImmediateContext->RSSetViewports(1, &vp);
-
 }
-
 
 int GetViewPortType(void)
 {
 	return g_ViewPortType;
 }
 
-void SetCameraAT(XMFLOAT3 pos, int x,int y, int z)
+void SetCameraAT(XMFLOAT3 pos, int x, int y, int z)
 {
 	ProcessMouseMovement();
 
 	g_Camera.at = pos;
 
-	
-
 	g_Camera.pos.x = g_Camera.at.x - sinf(g_Camera.rot.y) * g_Camera.len;
 	g_Camera.pos.z = g_Camera.at.z - cosf(g_Camera.rot.y) * g_Camera.len;
 	g_Camera.pos.y = g_Camera.at.y + sinf(g_Camera.rot.x) * g_Camera.len;  // Y ekseni hareketi
-
-	
 }
 
+void ProcessMouseMovement()
+{
+	// 🟢 ODAK YOKSA FAREYİ MERKEZLEMEYİ VE HESAPLAMALARI DİREKT DURDUR
+	if (!IsAppFocused())
+	{
+		return;
+	}
 
-
-void ProcessMouseMovement() {
 	static bool firstMouse = true;
-	static bool isMouseLocked = true; // Fare kilitli mi kontrolü
 	const float mouseSensitivity = 0.002f; // Fare hassasiyeti
 
 	POINT mousePos;
@@ -254,24 +209,7 @@ void ProcessMouseMovement() {
 	int centerX = SCREEN_WIDTH / 2;
 	int centerY = SCREEN_HEIGHT / 2;
 
-	// F1 tuşuna basılırsa fare serbest bırak
-	if (GetKeyboardTrigger(DIK_F1)) {
-		ClipCursor(NULL);
-		ShowCursor(TRUE);
-		isMouseLocked = false;
-		return;
-	}
-	// F2 tuşuna basılırsa fareyi kilitle
-	else if (GetKeyboardTrigger(DIK_F2)) {
-		ShowCursor(FALSE);
-		isMouseLocked = true;
-		SetCursorPos(centerX, centerY);
-	}
-
-	// Eğer fare serbestse hareketi işlemeden çık
-	if (!isMouseLocked) return;
-
-	// İlk karede fareyi sıfırla
+	// İlk karede fareyi sıフ ırla
 	if (firstMouse) {
 		lastMouseX = centerX;
 		lastMouseY = centerY;
@@ -286,7 +224,7 @@ void ProcessMouseMovement() {
 
 	// Hassasiyet uygula
 	g_Camera.rot.y += deltaX * mouseSensitivity;
-	g_Camera.rot.x += deltaY * mouseSensitivity; // Y eksenini ters çevirmedik, düzeltme yapıldı
+	g_Camera.rot.x += deltaY * mouseSensitivity;
 
 	// Yukarı-aşağı sınırlandırma
 	if (g_Camera.rot.x > XM_PI / 2.0f) g_Camera.rot.x = XM_PI / 2.0f - 0.01f;
@@ -297,9 +235,6 @@ void ProcessMouseMovement() {
 	lastMouseX = centerX;
 	lastMouseY = centerY;
 }
-
-
-
 
 void ChangeCameraMode(int mode)
 {
@@ -317,21 +252,12 @@ void ChangeCameraMode(int mode)
 	}
 	else if (mode == FIRST_PERSON) {
 		g_Camera.pos = { POS_X_CAM, POS_Y_CAM + 17.0f, POS_Z_CAM };
-		/*g_Camera.at = { POS_X_CAM + sinf(g_Camera.rot.y), POS_Y_CAM + 
-			17.0f, POS_Z_CAM + cosf(g_Camera.rot.y) };
-		g_Camera.up = { 0.0f, 1.0f, 0.0f };
-		g_Camera.rot = { 0.0f, 0.0f, 0.0f };
-		g_Camera.len = 3.0f;*/
 	}
 
 	SetViewPort(g_ViewPortType);
 }
 
-void UpdateCameraWithMouse() {
-
-
-	//// Kameranın "at" yönünü güncelle
-	//g_Camera.at.x = g_Camera.pos.x + cosf(g_Camera.rot.x) * sinf(g_Camera.rot.y);
-	//g_Camera.at.y = g_Camera.pos.y + sinf(g_Camera.rot.x);
-	//g_Camera.at.z = g_Camera.pos.z + cosf(g_Camera.rot.x) * cosf(g_Camera.rot.y);
+void UpdateCameraWithMouse()
+{
+	// İleride eklenecek mantıklar için
 }

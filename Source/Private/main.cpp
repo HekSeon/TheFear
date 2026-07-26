@@ -1,9 +1,7 @@
-﻿///////////////////////////////////
-// 
+﻿///////////////////////////////////// 
 // main.cpp
-// 
 // Author: BAYAR "HekSeon" SEMIH
-///////////////////////////////////
+/////////////////////////////////////
 #include "main.h"
 #include "renderer.h"
 #include "input.h"
@@ -43,11 +41,18 @@ void Update(void);
 void Draw(void);
 void CheckHit(void);
 
+// 🟢 FARE KİLİTLEME / ODAK FONKSİYON PROTOTİPLERİ
+void EnableMouseLock(BOOL bLock);
+BOOL IsAppFocused(void);
+
 //*****************************************************************************
 // グローバル変数 (Global Variables)
 //*****************************************************************************
 long g_MouseX = 0;
 long g_MouseY = 0;
+
+static HWND g_hWnd = NULL;
+static BOOL g_bAppHasFocus = TRUE;
 
 #ifdef _DEBUG
 int		g_CountFPS;							// FPSカウンター
@@ -102,6 +107,8 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 		NULL,
 		hInstance,
 		NULL);
+
+	g_hWnd = hWnd;
 
 	// 初期化処理 (ウィンドウを作成してから行う)
 	if (FAILED(Init(hInstance, hWnd, TRUE)))
@@ -180,7 +187,34 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	switch (message)
 	{
+		// 🟢 ODAK KAYBI (Alt+Tab, Başka Pencereye Tıklama, Windows Tuşu)
+	case WM_KILLFOCUS:
+		g_bAppHasFocus = FALSE;
+		EnableMouseLock(FALSE);
+		break;
+
+		// 🟢 ODAK KAZANILMASI
+	case WM_SETFOCUS:
+		g_bAppHasFocus = TRUE;
+		if (g_Mode == MODE_GAME)
+		{
+			EnableMouseLock(TRUE);
+		}
+		break;
+
+	case WM_ENTERSIZEMOVE:
+		EnableMouseLock(FALSE);
+		break;
+
+	case WM_EXITSIZEMOVE:
+		if (g_bAppHasFocus && g_Mode == MODE_GAME)
+		{
+			EnableMouseLock(TRUE);
+		}
+		break;
+
 	case WM_DESTROY:
+		EnableMouseLock(FALSE);
 		PostQuitMessage(0);
 		break;
 
@@ -238,6 +272,8 @@ HRESULT Init(HINSTANCE hInstance, HWND hWnd, BOOL bWindow)
 //=============================================================================
 void Uninit(void)
 {
+	EnableMouseLock(FALSE);
+
 	SetMode(MODE_MAX);
 
 	UninitSound();
@@ -332,7 +368,6 @@ void Draw(void)
 		SetDepthEnable(TRUE);
 		SetLightEnable(TRUE);
 	}
-
 #ifdef _DEBUG
 	DrawDebugProc();
 #endif
@@ -370,6 +405,7 @@ void SetMode(int mode)
 	switch (g_Mode)
 	{
 	case MODE_TITLE:
+		EnableMouseLock(FALSE);
 		UninitTitle();
 		InitTitle();
 		break;
@@ -378,14 +414,20 @@ void SetMode(int mode)
 		UninitCamera();
 		InitCamera();
 		InitGame();
+		if (g_bAppHasFocus)
+		{
+			EnableMouseLock(TRUE);
+		}
 		break;
 
 	case MODE_RESULT:
+		EnableMouseLock(FALSE);
 		UninitResult();
 		InitResult();
 		break;
 
 	case MODE_MAX:
+		EnableMouseLock(FALSE);
 		UninitPlayer();
 		break;
 	}
@@ -394,4 +436,50 @@ void SetMode(int mode)
 int GetMode(void)
 {
 	return g_Mode;
+}
+
+//=============================================================================
+// 🟢 FARE KİLİTLEME VE ODAK FONKSİYONLARININ TANIMLARI
+//=============================================================================
+void EnableMouseLock(BOOL bLock)
+{
+	if (g_hWnd == NULL) return;
+
+	static BOOL s_bIsLocked = FALSE;
+
+	if (bLock)
+	{
+		if (!s_bIsLocked && g_bAppHasFocus)
+		{
+			while (ShowCursor(FALSE) >= 0);
+
+			RECT rect;
+			GetClientRect(g_hWnd, &rect);
+
+			POINT ul = { rect.left, rect.top };
+			POINT lr = { rect.right, rect.bottom };
+			ClientToScreen(g_hWnd, &ul);
+			ClientToScreen(g_hWnd, &lr);
+
+			RECT clipRect;
+			SetRect(&clipRect, ul.x, ul.y, lr.x, lr.y);
+			ClipCursor(&clipRect);
+
+			s_bIsLocked = TRUE;
+		}
+	}
+	else
+	{
+		// 🟢 Tüm kilitleri kesin olarak kaldır
+		ClipCursor(NULL);
+
+		while (ShowCursor(TRUE) < 0);
+
+		s_bIsLocked = FALSE;
+	}
+}
+
+BOOL IsAppFocused(void)
+{
+	return g_bAppHasFocus;
 }
