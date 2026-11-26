@@ -36,9 +36,7 @@ HRESULT InitSea(XMFLOAT3 centerPos, int nTilesX, int nTilesZ,
 	g_nNumVertex = (nNumBlockX + 1) * (nNumBlockZ + 1);
 	g_nNumIndex = (nNumBlockX + 1) * 2 * nNumBlockZ + (nNumBlockZ - 1) * 2;
 
-	D3DX11CreateShaderResourceViewFromFile(GetDevice(),
-		"data/TEXTURE/sea.jpg",
-		NULL, NULL, &g_SeaTexture, NULL);
+	LoadGameTexture("data/TEXTURE/sea.jpg", &g_SeaTexture);
 
 	float tileWidth = nNumBlockX * fBlockSizeX;
 	float tileDepth = nNumBlockZ * fBlockSizeZ;

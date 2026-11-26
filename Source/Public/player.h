@@ -69,3 +69,7 @@ void UninitPlayer(void);
 void UpdatePlayer(void);
 void DrawPlayer(void);
 PLAYER* GetPlayer(void);
+void RequestPlayerAttack(void);
+XMFLOAT3 GetPlayerAttackCenter(void);
+float GetPlayerAttackRadius(void);
+bool IsPlayerAttackActive(void);

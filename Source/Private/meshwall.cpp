@@ -16,7 +16,7 @@
 
 #define	MAX_MESH_WALL		(10)					// 壁の総数
 #define	VALUE_MOVE_WALL		(5.0f)					// 移動速度
-#define	VALUE_ROTATE_WALL	(D3DX_PI * 0.001f)		// 回転速度
+#define	VALUE_ROTATE_WALL	(XM_PI * 0.001f)		// 回転速度
 
 //*****************************************************************************
 // 構造体定義
@@ -65,12 +65,7 @@ HRESULT InitMeshWall(XMFLOAT3 pos, XMFLOAT3 rot, XMFLOAT4 col,
 	// テクスチャ生成
 	for (int i = 0; i < TEXTURE_MAX; i++)
 	{
-		D3DX11CreateShaderResourceViewFromFile(GetDevice(),
-			g_TextureName[i],
-			NULL,
-			NULL,
-			&g_Texture[i],
-			NULL);
+		LoadGameTexture(g_TextureName[i], &g_Texture[i]);
 	}
 
 	g_TexNo = 0;

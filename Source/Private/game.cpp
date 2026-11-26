@@ -16,7 +16,7 @@
 #include "player.h"
 #include "sword.h"
 #include "enemy.h"
-#include "skydome.h"
+#include "sky.h"
 #include "meshfield.h"
 #include "tree.h"
 #include "shadow.h"
@@ -25,7 +25,6 @@
 #include "debugproc.h"
 
 #include "score.h"
-#include "UI.h"
 //*****************************************************************************
 // マクロ定義
 //*****************************************************************************
@@ -58,7 +57,7 @@ HRESULT InitGame(void)
 
 	InitSea(XMFLOAT3(0.0f, -20.0f, 0.0f), 5, 5, 50, 50, 130.0f, 130.0f); 
 
-	InitSkydome();
+	InitSky();
 
 	InitPlayer();
 	
@@ -70,8 +69,6 @@ HRESULT InitGame(void)
 	InitEnemy();
 
 	InitScore();
-
-	InitUI();
 
 	//InitShadow();
 
@@ -87,7 +84,7 @@ void UninitGame(void)
 {
 	//UninitShadow();
 
-	UninitUI();
+	ReleaseGameDebugGeometry();
 
 	UninitScore();
 
@@ -103,7 +100,7 @@ void UninitGame(void)
 
 	UninitMeshField();
 
-	UninitSkydome();
+	UninitSky();
 
 	
 	
@@ -121,15 +118,14 @@ void UpdateGame(void)
 
 	UpdateTree();
 
-	UpdateSkydome();
 
+	ProcessMouseMovement();
 	UpdatePlayer();
+	SetCameraAT(GetPlayer()->pos, -50, 20, 50);
 
 	UpdateSword();
 
 	UpdateEnemy();
-
-	UpdateUI();
 
 	
 	//UpdateShadow();
@@ -162,6 +158,9 @@ void UpdateGame(void)
 //=============================================================================
 void DrawGame0(void)
 {
+	SetCamera();
+	SetFogEnable(FALSE);
+	DrawSky();
 	DrawMeshField();
 
 	DrawSea();
@@ -170,12 +169,7 @@ void DrawGame0(void)
 
 
 
-	DrawSkydome();
 
-	PLAYER* player = GetPlayer();
-	XMFLOAT3 pos = player->pos;
-	SetCameraAT(pos, -50, 20, 50);
-	SetCamera();
 	
 
 	DrawPlayer();
@@ -185,20 +179,7 @@ void DrawGame0(void)
 	DrawSword(); 
 
 	//DrawShadow();
-	
-	SetDepthEnable(FALSE);
-
-	
-	SetLightEnable(FALSE);
-
-	DrawUI();
-
-//3d yapar
-	SetLightEnable(TRUE);
-
-	SetDepthEnable(TRUE);
-
-	SetFogEnable(FALSE);
+	DrawGameDebugGeometry();
 }
 
 

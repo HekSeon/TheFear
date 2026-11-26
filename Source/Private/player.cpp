@@ -33,7 +33,7 @@
 #define	VALUE_ROTATE		(XM_PI * 0.02f)					// 回転量
 
 #define PLAYER_SHADOW_SIZE	(0.4f)							// 影の大きさ
-#define PLAYER_OFFSET_Y		(16.0f)							// プレイヤーの足元をあわせる
+#define PLAYER_OFFSET_Y		(16.065f)							// プレイヤーの足元をあわせる
 
 
 	
@@ -51,8 +51,12 @@
 
 static PLAYER g_Player;   // プレイヤー
 
-static BOOL g_Load = FALSE;
-ENEMY* enemies = NULL;
+static int g_AttackFrame = 0;
+static bool g_AttackRequested = false;
+constexpr int AttackHitFrame = 16;
+constexpr int AttackEndFrame = 30;
+constexpr float AttackReach = 18.0f;
+constexpr float AttackRadius = 12.0f;
 
 
 
@@ -77,6 +81,14 @@ HRESULT InitPlayer(void)
 	g_Player.use = TRUE;
 
 	g_Player.health = 100.0f;
+	g_AttackFrame = 0;
+	g_AttackRequested = false;
+	g_Player.attack = FALSE;
+	XMFLOAT3 ground, normal;
+	if (RayHitField(g_Player.pos, &ground, &normal))
+		g_Player.pos.y = ground.y + PLAYER_OFFSET_Y;
+	g_Player.oldpos = g_Player.pos;
+	XMStoreFloat4x4(&g_Player.mtxWorld, XMMatrixIdentity());
 
 	// gölge oluştur
 	XMFLOAT3 shPos = g_Player.pos;
@@ -181,8 +193,13 @@ void UpdatePlayer(void)
 {
 	CAMERA* cam = GetCamera();
 	g_Player.move = FALSE;
-	g_Player.attack = FALSE;
-
+	if (!g_Player.use) return;
+	if (g_Player.health <= 0.0f)
+	{
+		g_Player.use = FALSE;
+		SetFade(FADE_OUT, MODE_RESULT);
+		return;
+	}
 
 	// Kamera mod değişimi
 	if (GetKeyboardTrigger(DIK_X)) g_CameraMode = FIRST_PERSON;
@@ -202,81 +219,48 @@ void UpdatePlayer(void)
 	if (GetKeyboardPress(DIK_D) && GetKeyboardPress(DIK_S)) { g_Player.spd = VALUE_MOVE; g_Player.dir = 7 * XM_PI / 4; g_Player.move = TRUE; }
 
 
+	const bool startAttack = g_AttackRequested && g_AttackFrame == 0 &&
+		IsAppFocused() && !IsGameDebugOpen();
+	g_AttackRequested = false;
+	if (startAttack)
+	{
+		g_AttackFrame = 1;
+		g_Player.rot.y = XM_PI + cam->rot.y;
+	}
+	else if (g_AttackFrame > 0)
+	{
+		if (++g_AttackFrame > AttackEndFrame)
+			g_AttackFrame = 0;
+	}
+	g_Player.attack = g_AttackFrame != 0;
+
+	g_Player.oldpos = g_Player.pos;
+	XMFLOAT3 next = g_Player.pos;
 	if (g_Player.spd > 0.0f)
 	{
-		g_Player.rot.y = g_Player.dir + cam->rot.y;
-		g_Player.pos.x -= sinf(g_Player.rot.y) * g_Player.spd;
-		g_Player.pos.z -= cosf(g_Player.rot.y) * g_Player.spd;
+		const float moveYaw = g_Player.dir + cam->rot.y;
+		if (!g_Player.attack)
+			g_Player.rot.y = moveYaw;
+
+		const float speed = g_Player.attack ? g_Player.spd * 0.45f : g_Player.spd;
+		next.x -= sinf(moveYaw) * speed;
+		next.z -= cosf(moveYaw) * speed;
 	}
 
+	XMFLOAT3 ground, normal;
+	if (RayHitField(next, &ground, &normal))
+		g_Player.pos = {next.x, ground.y + PLAYER_OFFSET_Y, next.z};
 
-	XMFLOAT3 HitPosition, Normal;
-	if (RayHitField(g_Player.pos, &HitPosition, &Normal))
-	{
-		g_Player.pos.y = HitPosition.y + PLAYER_OFFSET_Y;
-	}
-	else
-	{
-		g_Player.pos.y = PLAYER_OFFSET_Y;
-	}
+	if (g_AttackFrame == AttackHitFrame)
+		DamageEnemiesInRange(GetPlayerAttackCenter(), AttackRadius, 50.0f);
 
+	XMFLOAT3 shadowPos = g_Player.pos;
+	shadowPos.y -= PLAYER_OFFSET_Y - 0.1f;
+	SetPositionShadow(g_Player.shadowIdx, shadowPos);
 
-	ENEMY* g_Enemies = GetEnemy();
-
-	if (g_Enemies == nullptr)
-	{
-		return;
-	}
-
-	for (int i = 0; i < MAX_ENEMY; i++)
-	{
-		if (!g_Enemies[i].use || !g_Enemies[i].isAlive)
-		{
-			continue;
-		}
-		if (CollisionBB(g_Enemies[i].pos, 5.0f, 5.0f, g_Player.pos, 5.0f, 5.0f))
-		{
-			if (IsMouseLeftPressed())
-			{
-
-				if (!g_Enemies[i].isAlive) continue; // Ölü düşmanları atla
-
-				g_Enemies[i].health -= 50;
-
-				if (g_Enemies[i].health <= 0)
-				{
-					g_Enemies[i].health = 0;
-					g_Enemies[i].isAlive = FALSE;
-					g_Enemies[i].use = FALSE;
-				}
-
-			}
-		}
-	}
-
-
-	XMFLOAT3 pos = g_Player.pos;
-	pos.y -= (PLAYER_OFFSET_Y - 0.1f);
-	SetPositionShadow(g_Player.shadowIdx, pos);
-
-	g_Player.spd *= 0.5f;
-
-	if (g_Player.health <= 0.0f)
-	{
-		g_Player.health = 0.0f;
-		g_Player.use = FALSE;
-		SetFade(FADE_OUT, MODE_RESULT);
-		g_bPause = FALSE;
-	}
-
-
-	// 🟢 ANİMASYON GÜNCELLEME ÇAĞRISI
-	if (g_Player.move)
-		SetPlayerAnimation(&g_Player, ANIM_WALK);
-	else
-		SetPlayerAnimation(&g_Player, ANIM_IDLE);
-
-	UpdatePlayerAnimation(&g_Player); // tüm parçalar burada hesaplanacak
+	SetPlayerAnimation(&g_Player, g_Player.attack ? ANIM_ATTACK :
+		(g_Player.move ? ANIM_WALK : ANIM_IDLE));
+	UpdatePlayerAnimation(&g_Player);
 }
 
 
@@ -308,20 +292,9 @@ void DrawTPSPlayer(void)
 
 	XMMATRIX mtxScl, mtxRot, mtxTranslate, mtxWorld;
 
-	CAMERA* g_Camera = GetCamera();
-
-	XMVECTOR cameraForward = XMVectorSubtract(XMLoadFloat3(&g_Camera->Target), XMLoadFloat3(&g_Camera->Eye));
-	cameraForward = XMVector3Normalize(cameraForward);
-
-	float playerRotationY = atan2f(-XMVectorGetX(cameraForward), -XMVectorGetZ(cameraForward));
-
-	g_Player.rot.x = playerRotationY;
-	g_Player.rot.z = playerRotationY;
-
-
 	mtxWorld = XMMatrixIdentity();
 	mtxScl = XMMatrixScaling(g_Player.scl.x, g_Player.scl.y, g_Player.scl.z);
-	mtxRot = XMMatrixRotationRollPitchYaw(g_Player.rot.x, g_Player.rot.y, g_Player.rot.z);
+	mtxRot = XMMatrixRotationY(g_Player.rot.y + XM_PI);
 	mtxTranslate = XMMatrixTranslation(g_Player.pos.x, g_Player.pos.y, g_Player.pos.z);
 
 	mtxWorld = XMMatrixMultiply(mtxScl, mtxRot);
@@ -331,16 +304,18 @@ void DrawTPSPlayer(void)
 	XMStoreFloat4x4(&g_Player.mtxWorld, mtxWorld);
 	DrawModel(&g_Player.model);
 
+	const XMFLOAT3 pivots[] = {{0,-2,0}, {11,-4,0}, {-11,-4,0},
+		{5,-23.5f,0}, {-5,-23.5f,0}};
 	for (int i = 0; i < PLAYER_PARTS_MAX; i++)
 	{
-		mtxWorld = XMMatrixIdentity();
+		const XMFLOAT3& pivot = pivots[i];
 		mtxScl = XMMatrixScaling(g_Player.parts[i].scl.x, g_Player.parts[i].scl.y, g_Player.parts[i].scl.z);
 		mtxRot = XMMatrixRotationRollPitchYaw(g_Player.parts[i].rot.x, g_Player.parts[i].rot.y, g_Player.parts[i].rot.z);
 		mtxTranslate = XMMatrixTranslation(g_Player.parts[i].pos.x, g_Player.parts[i].pos.y, g_Player.parts[i].pos.z);
 
 
-		mtxWorld = XMMatrixMultiply(mtxScl, mtxRot);
-		mtxWorld = XMMatrixMultiply(mtxWorld, mtxTranslate);
+		mtxWorld = XMMatrixTranslation(-pivot.x, -pivot.y, -pivot.z) *
+			mtxScl * mtxRot * XMMatrixTranslation(pivot.x, pivot.y, pivot.z) * mtxTranslate;
 
 		if (g_Player.parts[i].parent != NULL)
 		{
@@ -359,6 +334,17 @@ void DrawTPSPlayer(void)
 //=============================================================================
 // プレイヤー情報を取得
 //=============================================================================
+void RequestPlayerAttack(void) { g_AttackRequested = true; }
+
+XMFLOAT3 GetPlayerAttackCenter(void)
+{
+	return {g_Player.pos.x - sinf(g_Player.rot.y) * AttackReach, g_Player.pos.y,
+		g_Player.pos.z - cosf(g_Player.rot.y) * AttackReach};
+}
+
+float GetPlayerAttackRadius(void) { return AttackRadius; }
+bool IsPlayerAttackActive(void) { return g_AttackFrame == AttackHitFrame; }
+
 PLAYER *GetPlayer(void)
 {
 	return &g_Player;

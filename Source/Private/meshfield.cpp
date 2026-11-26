@@ -5,6 +5,7 @@
 //
 //=============================================================================
 #include "main.h"
+#include <algorithm>
 #include "input.h"
 #include "meshfield.h"
 #include "renderer.h"
@@ -65,12 +66,7 @@ HRESULT InitMeshField(XMFLOAT3 pos, XMFLOAT3 rot,
     // テクスチャ生成
     for (int i = 0; i < TEXTURE_MAX; i++)
     {
-        D3DX11CreateShaderResourceViewFromFile(GetDevice(),
-            g_TextureName[i],
-            NULL,
-            NULL,
-            &g_Texture[i],
-            NULL);
+        LoadGameTexture(g_TextureName[i], &g_Texture[i]);
     }
 
     g_TexNo = 0;
@@ -165,10 +161,10 @@ HRESULT InitMeshField(XMFLOAT3 pos, XMFLOAT3 rot,
         for (int x = 0; x <= g_nNumBlockXField; x++)
         {
             int idx = z * (g_nNumBlockXField + 1) + x;
-            int idxL = z * (g_nNumBlockXField + 1) + max(x - 1, 0);
-            int idxR = z * (g_nNumBlockXField + 1) + min(x + 1, g_nNumBlockXField);
-            int idxU = max(z - 1, 0) * (g_nNumBlockXField + 1) + x;
-            int idxD = min(z + 1, g_nNumBlockZField) * (g_nNumBlockXField + 1) + x;
+            int idxL = z * (g_nNumBlockXField + 1) + std::max(x - 1, 0);
+            int idxR = z * (g_nNumBlockXField + 1) + std::min(x + 1, g_nNumBlockXField);
+            int idxU = std::max(z - 1, 0) * (g_nNumBlockXField + 1) + x;
+            int idxD = std::min(z + 1, g_nNumBlockZField) * (g_nNumBlockXField + 1) + x;
 
             XMFLOAT3 normal;
             normal.x = g_Vertex[idxL].Position.y - g_Vertex[idxR].Position.y;
@@ -346,68 +342,38 @@ void DrawMeshField(void)
 //=============================================================================
 // レイキャスト処理（地形との当たり判定）
 //=============================================================================
-BOOL RayHitField(XMFLOAT3 pos, XMFLOAT3* HitPosition, XMFLOAT3* Normal)
+BOOL RayHitField(XMFLOAT3 pos, XMFLOAT3* hitPosition, XMFLOAT3* normal)
 {
-    if (g_Load == FALSE) return FALSE;
+    if (!g_Load || !g_Vertex || !hitPosition || !normal) return FALSE;
 
-    XMFLOAT3 start = pos;
-    XMFLOAT3 end = pos;
-
-    // 原点だった場合のテスト
-    if (start.x == 0.0f)
-    {
-        start.x += 1.0f;
-        end.x += 1.0f;
-    }
-    if (start.z == 0.0f)
-    {
-        start.z -= 1.0f;
-        end.z -= 1.0f;
-    }
-
-    // 少し上から、下方向へレイを飛ばす
-    start.y = 1000.0f;
-    end.y = -1000.0f;
-
-    // 座標から現在いるブロックを割り出し、対象のポリゴンに絞って判定（高速化）
-    float fx = (g_nNumBlockXField / 2.0f) * g_fBlockSizeXField;
-    float fz = (g_nNumBlockZField / 2.0f) * g_fBlockSizeZField;
-    int sz = (int)((-start.z + fz) / g_fBlockSizeZField);
-    int sx = (int)((start.x + fx) / g_fBlockSizeXField);
-    int ez = sz + 1;
-    int ex = sx + 1;
-
-    if ((sz < 0) || (sz > g_nNumBlockZField - 1) ||
-        (sx < 0) || (sx > g_nNumBlockXField - 1))
-    {
-        *Normal = { 0.0f, 1.0f, 0.0f };
+    const float cellX = (pos.x - g_posField.x) / g_fBlockSizeXField + g_nNumBlockXField * 0.5f;
+    const float cellZ = (g_posField.z - pos.z) / g_fBlockSizeZField + g_nNumBlockZField * 0.5f;
+    if (!(cellX >= 0.0f && cellX <= g_nNumBlockXField &&
+          cellZ >= 0.0f && cellZ <= g_nNumBlockZField))
         return FALSE;
-    }
 
-    // 周辺ブロックのみ判定
-    for (int z = sz; z < ez; z++)
-    {
-        for (int x = sx; x < ex; x++)
-        {
-            XMFLOAT3 p0 = g_Vertex[z * (g_nNumBlockXField + 1) + x].Position;
-            XMFLOAT3 p1 = g_Vertex[z * (g_nNumBlockXField + 1) + (x + 1)].Position;
-            XMFLOAT3 p2 = g_Vertex[(z + 1) * (g_nNumBlockXField + 1) + x].Position;
-            XMFLOAT3 p3 = g_Vertex[(z + 1) * (g_nNumBlockXField + 1) + (x + 1)].Position;
+    const int x = std::min(static_cast<int>(cellX), g_nNumBlockXField - 1);
+    const int z = std::min(static_cast<int>(cellZ), g_nNumBlockZField - 1);
+    const float u = cellX - x;
+    const float v = cellZ - z;
+    const int stride = g_nNumBlockXField + 1;
+    const XMFLOAT3& p0 = g_Vertex[z * stride + x].Position;
+    const XMFLOAT3& p1 = g_Vertex[z * stride + x + 1].Position;
+    const XMFLOAT3& p2 = g_Vertex[(z + 1) * stride + x].Position;
+    const XMFLOAT3& p3 = g_Vertex[(z + 1) * stride + x + 1].Position;
 
-            // 三角形ポリゴン2枚分で当たり判定
-            BOOL ans = RayCast(p0, p2, p1, start, end, HitPosition, Normal);
-            if (ans)
-            {
-                return TRUE;
-            }
+    // The strip emits p2, p0, p3, p1, with p0-p3 shared by both triangles.
+    const bool upper = v <= u;
+    const float height = upper
+        ? p0.y * (1.0f - u) + p1.y * (u - v) + p3.y * v
+        : p0.y * (1.0f - v) + p2.y * (v - u) + p3.y * u;
+    *hitPosition = {pos.x, g_posField.y + height, pos.z};
 
-            ans = RayCast(p1, p2, p3, start, end, HitPosition, Normal);
-            if (ans)
-            {
-                return TRUE;
-            }
-        }
-    }
-
-    return FALSE;
+    const XMVECTOR origin = XMLoadFloat3(&p0);
+    const XMVECTOR diagonal = XMLoadFloat3(&p3) - origin;
+    const XMVECTOR side = XMLoadFloat3(upper ? &p1 : &p2) - origin;
+    const XMVECTOR cross = upper ? XMVector3Cross(side, diagonal)
+                                 : XMVector3Cross(diagonal, side);
+    XMStoreFloat3(normal, XMVector3Normalize(cross));
+    return TRUE;
 }

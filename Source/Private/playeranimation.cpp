@@ -6,7 +6,7 @@
 //=================================================================
 
 #include "player.h"
-#include "PlayerAnimation.h"
+#include "playeranimation.h"
 #include <DirectXMath.h>
 using namespace DirectX;
 
@@ -21,13 +21,13 @@ static INTERPOLATION_DATA idle_tbl_head[] = {
 };
 
 static INTERPOLATION_DATA idle_tbl_larm[] = {
-    { {0,3,0}, {0,0,0}, {1,1,1}, 15 },
-    { {0,3,0}, {0,0,0}, {1,1,1}, 30 },
+    { {0,0,0}, {0,0,0}, {1,1,1}, 15 },
+    { {0,0,0}, {0,0,0}, {1,1,1}, 30 },
 };
 
 static INTERPOLATION_DATA idle_tbl_rarm[] = {
-    { {0,3,0}, {0,0,0}, {1,1,1}, 15 },
-    { {0,3,0}, {0,0,0}, {1,1,1}, 30 },
+    { {0,0,0}, {0,0,0}, {1,1,1}, 15 },
+    { {0,0,0}, {0,0,0}, {1,1,1}, 30 },
 };
 
 static INTERPOLATION_DATA idle_tbl_lleg[] = {
@@ -48,13 +48,13 @@ static INTERPOLATION_DATA move_tbl_head[] = {
 };
 
 static INTERPOLATION_DATA move_tbl_larm[] = {
-    { {0,3,0}, {XM_PI / 9,0,0}, {1,1,1}, 15 },
-    { {0,3,0}, {-XM_PI / 9,0,0}, {1,1,1}, 30 },
+    { {0,0,0}, {XM_PI / 9,0,0}, {1,1,1}, 15 },
+    { {0,0,0}, {-XM_PI / 9,0,0}, {1,1,1}, 30 },
 };
 
 static INTERPOLATION_DATA move_tbl_rarm[] = {
-    { {0,3,0}, {-XM_PI / 9,0,0}, {1,1,1}, 15 },
-    { {0,3,0}, {XM_PI / 9,0,0}, {1,1,1}, 30 },
+    { {0,0,0}, {-XM_PI / 9,0,0}, {1,1,1}, 15 },
+    { {0,0,0}, {XM_PI / 9,0,0}, {1,1,1}, 30 },
 };
 
 static INTERPOLATION_DATA move_tbl_lleg[] = {
@@ -67,6 +67,13 @@ static INTERPOLATION_DATA move_tbl_rleg[] = {
     { {0,0,0}, {-XM_PI / 9,0,0}, {1,1,1}, 30 },
 };
 
+
+static INTERPOLATION_DATA attack_tbl_rarm[] = {
+    {{0,0,0}, {0,0,0}, {1,1,1}, 10},
+    {{0,0,0}, {0.85f,-0.65f,0.2f}, {1,1,1}, 5},
+    {{0,0,0}, {-1.25f,0.75f,-0.15f}, {1,1,1}, 14},
+    {{0,0,0}, {0,0,0}, {1,1,1}, 2},
+};
 
 static INTERPOLATION_DATA* g_IdleTblAdr[] = {
     idle_tbl_head, idle_tbl_larm, idle_tbl_rarm, idle_tbl_lleg, idle_tbl_rleg
@@ -119,7 +126,8 @@ void UpdatePlayerAnimation(PLAYER* player)
         int nowNo = (int)part.time;
         int maxNo = part.tblMax;
         int nextNo = (nowNo + 1) % maxNo;
-        INTERPOLATION_DATA* tbl = currentTblAdr[part.tblNo];
+        INTERPOLATION_DATA* tbl = currentAnim == ANIM_ATTACK && i == 2
+            ? attack_tbl_rarm : currentTblAdr[part.tblNo];
 
         XMVECTOR nowPos = XMLoadFloat3(&tbl[nowNo].pos);
         XMVECTOR nowRot = XMLoadFloat3(&tbl[nowNo].rot);
@@ -159,7 +167,7 @@ void SetPlayerAnimation(PLAYER* player, PLAYER_ANIM anim)
             part.time = 0.0f;
             part.tblNo = i;
 
-            if (anim == ANIM_IDLE)
+            if (anim != ANIM_WALK)
             {
                 switch (i)
                 {
@@ -170,8 +178,10 @@ void SetPlayerAnimation(PLAYER* player, PLAYER_ANIM anim)
                 case 4: part.tblMax = sizeof(idle_tbl_rleg) / sizeof(INTERPOLATION_DATA); break;
                 default: part.tblMax = 0; break;
                 }
+                if (anim == ANIM_ATTACK && i == 2)
+                    part.tblMax = _countof(attack_tbl_rarm);
             }
-            else if (anim == ANIM_WALK)
+            else
             {
                 switch (i)
                 {

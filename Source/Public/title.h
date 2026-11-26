@@ -18,4 +18,4 @@
 HRESULT InitTitle(void);
 void UninitTitle(void);
 void UpdateTitle(void);
-void DrawTitle(void);
+void DrawTitle(void);void HandleTitleClick(HWND window, int x, int y);

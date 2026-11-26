@@ -46,6 +46,7 @@ struct DX11_MODEL
 void LoadModel(char* FileName, DX11_MODEL* Model);
 void UnloadModel(DX11_MODEL* Model);
 void DrawModel(DX11_MODEL* Model);
+void DrawModelSubsets(DX11_MODEL* model, unsigned first, unsigned count);
 
 // モデルのマテリアルのディフューズを取得する。Max16個分にしてある[cite: 5]
 void GetModelDiffuse(DX11_MODEL* Model, XMFLOAT4* diffuse);

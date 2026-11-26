@@ -5,6 +5,7 @@
 //
 //=============================================================================
 #include "sound.h"
+#include <algorithm>
 
 //*****************************************************************************
 // パラメータ構造体定義
@@ -24,6 +25,8 @@ HRESULT ReadChunkData(HANDLE hFile, void* pBuffer, DWORD dwBuffersize, DWORD dwB
 //*****************************************************************************
 // グローバル変数
 //*****************************************************************************
+static int g_MasterVolumePercent = 100;
+static bool g_AudioComInitialized = false;
 IXAudio2* g_pXAudio2 = NULL;                                // XAudio2オブジェクトへのインターフェース
 IXAudio2MasteringVoice* g_pMasteringVoice = NULL;            // マスターボイス
 IXAudio2SourceVoice* g_apSourceVoice[SOUND_LABEL_MAX] = {};    // ソースボイス
@@ -45,7 +48,7 @@ SOUNDPARAM g_aParam[SOUND_LABEL_MAX] =
     { (char*)"data/SE/shot000.wav", 0 },        // 弾発射音
     { (char*)"data/SE/shot001.wav", 0 },
     { (char*)"data/SE/shot.wav", 0 },           // ヒット音
-    { (char*)"data/BGM/title.wav", -1 },
+    { (char*)"data/BGM/title.wav", XAUDIO2_LOOP_INFINITE },
     { (char*)"data/BGM/ingame.wav", -1 },
     { (char*)"data/SE/hit.wav", 0 },
 };
@@ -58,16 +61,16 @@ BOOL InitSound(HWND hWnd)
     HRESULT hr;
 
     // COMライブラリの初期化
-    CoInitializeEx(NULL, COINIT_MULTITHREADED);
+    hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
+    if (FAILED(hr)) return FALSE;
+    g_AudioComInitialized = true;
 
     // XAudio2オブジェクトの作成
     hr = XAudio2Create(&g_pXAudio2, 0);
     if (FAILED(hr))
     {
-        MessageBox(hWnd, "XAudio2オブジェクトの作成に失敗！", "警告！", MB_ICONWARNING);
-
-        // COMライブラリの終了処理
-        CoUninitialize();
+        OutputDebugStringA("TheFear: XAudio2 unavailable; continuing without audio.\n");
+        UninitSound();
 
         return FALSE;
     }
@@ -76,20 +79,13 @@ BOOL InitSound(HWND hWnd)
     hr = g_pXAudio2->CreateMasteringVoice(&g_pMasteringVoice);
     if (FAILED(hr))
     {
-        MessageBox(hWnd, "マスターボイスの生成に失敗！", "警告！", MB_ICONWARNING);
-
-        if (g_pXAudio2)
-        {
-            // XAudio2オブジェクトの解放
-            g_pXAudio2->Release();
-            g_pXAudio2 = NULL;
-        }
-
-        // COMライブラリの終了処理
-        CoUninitialize();
+        OutputDebugStringA("TheFear: no audio output device; continuing without audio.\n");
+        UninitSound();
 
         return FALSE;
     }
+
+    SetMasterVolumePercent(g_MasterVolumePercent);
 
     // サウンドデータの初期化
     for (int nCntSound = 0; nCntSound < SOUND_LABEL_MAX; nCntSound++)
@@ -108,10 +104,7 @@ BOOL InitSound(HWND hWnd)
         // サウンドデータファイルの生成
         hFile = CreateFile(g_aParam[nCntSound].pFilename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
         if (hFile == INVALID_HANDLE_VALUE)
-        {
-            MessageBox(hWnd, "サウンドデータファイルの生成に失敗！(1)", "警告！", MB_ICONWARNING);
-            return FALSE;
-        }
+            continue;
         if (SetFilePointer(hFile, 0, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER)
         {   // ファイルポインタを先頭に移動
             MessageBox(hWnd, "サウンドデータファイルの生成に失敗！(2)", "警告！", MB_ICONWARNING);
@@ -241,15 +234,32 @@ void UninitSound(void)
         g_pXAudio2 = NULL;
     }
 
-    // COMライブラリの終了処理
-    CoUninitialize();
+    if (g_AudioComInitialized)
+    {
+        CoUninitialize();
+        g_AudioComInitialized = false;
+    }
 }
 
 //=============================================================================
 // セグメント再生(再生中なら停止)
 //=============================================================================
-void PlaySound(int label)
+int GetMasterVolumePercent(void)
 {
+    return g_MasterVolumePercent;
+}
+
+void SetMasterVolumePercent(int percent)
+{
+    g_MasterVolumePercent = std::clamp(percent, 0, 100);
+    if (g_pMasteringVoice)
+        g_pMasteringVoice->SetVolume(g_MasterVolumePercent / 100.0f);
+}
+
+void PlayGameSound(int label)
+{
+    if (label < 0 || label >= SOUND_LABEL_MAX || !g_apSourceVoice[label]) return;
+
     XAUDIO2_VOICE_STATE xa2state;
     XAUDIO2_BUFFER buffer;
 
@@ -283,6 +293,8 @@ void PlaySound(int label)
 //=============================================================================
 void StopSound(int label)
 {
+    if (label < 0 || label >= SOUND_LABEL_MAX || !g_apSourceVoice[label]) return;
+
     XAUDIO2_VOICE_STATE xa2state;
 
     // 状態取得

@@ -3,6 +3,7 @@
 // Author: BAYAR "HekSeon" SEMIH
 /////////////////////////////////////
 #include "main.h"
+#include <cwchar>
 #include "renderer.h"
 #include "input.h"
 #include "camera.h"
@@ -19,6 +20,8 @@
 #include "fade.h"
 #include "title.h"
 #include "result.h"
+#include "enemy.h"
+#include "score.h"
 
 // ImGui kullanılıyorsa ileride aktif edilebilir
 //#include "imgui.h"
@@ -66,6 +69,17 @@ int g_Mode = MODE_TITLE;
 //=============================================================================
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
+	wchar_t executablePath[MAX_PATH];
+	const DWORD length = GetModuleFileNameW(nullptr, executablePath, _countof(executablePath));
+	if (length && length < _countof(executablePath))
+	{
+		wchar_t* filename = std::wcsrchr(executablePath, L'\\');
+		if (filename)
+		{
+			*filename = L'\0';
+			SetCurrentDirectoryW(executablePath);
+		}
+	}
 	UNREFERENCED_PARAMETER(hPrevInstance);	// 未使用宣言による警告防止
 	UNREFERENCED_PARAMETER(lpCmdLine);		// 未使用宣言による警告防止
 
@@ -198,7 +212,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		g_bAppHasFocus = TRUE;
 		if (g_Mode == MODE_GAME)
 		{
-			EnableMouseLock(TRUE);
+			EnableMouseLock(!IsGameDebugOpen());
 		}
 		break;
 
@@ -209,7 +223,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_EXITSIZEMOVE:
 		if (g_bAppHasFocus && g_Mode == MODE_GAME)
 		{
-			EnableMouseLock(TRUE);
+			EnableMouseLock(!IsGameDebugOpen());
 		}
 		break;
 
@@ -221,9 +235,30 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_KEYDOWN:
 		switch (wParam)
 		{
+		case VK_F2:
+			if (g_Mode == MODE_GAME && !(lParam & (1L << 30)))
+			{
+				SetGameDebugOpen(!IsGameDebugOpen());
+				EnableMouseLock(!IsGameDebugOpen());
+			}
+			break;
 		case VK_ESCAPE:
 			DestroyWindow(hWnd);
 			break;
+		}
+		break;
+
+	case WM_LBUTTONDOWN:
+		if (g_Mode == MODE_TITLE)
+			HandleTitleClick(hWnd, static_cast<short>(LOWORD(lParam)), static_cast<short>(HIWORD(lParam)));
+		else if (g_Mode == MODE_RESULT)
+			HandleResultClick(hWnd, static_cast<short>(LOWORD(lParam)), static_cast<short>(HIWORD(lParam)));
+		else if (g_Mode == MODE_GAME)
+		{
+			if (IsGameDebugOpen())
+				HandleGameDebugClick(hWnd, static_cast<short>(LOWORD(lParam)), static_cast<short>(HIWORD(lParam)));
+			else
+				RequestPlayerAttack();
 		}
 		break;
 
@@ -244,7 +279,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 //=============================================================================
 HRESULT Init(HINSTANCE hInstance, HWND hWnd, BOOL bWindow)
 {
-	InitRenderer(hInstance, hWnd, bWindow);
+	const HRESULT rendererResult = InitRenderer(hInstance, hWnd, bWindow);
+	if (FAILED(rendererResult)) return rendererResult;
 
 	InitLight();
 
@@ -346,16 +382,12 @@ void Draw(void)
 		break;
 
 	case MODE_RESULT:
-		SetViewPort(TYPE_FULL_SCREEN);
-		SetDepthEnable(FALSE);
-		SetLightEnable(FALSE);
-
-		DrawResult();
-
-		SetLightEnable(TRUE);
-		SetDepthEnable(TRUE);
+		DrawBackBufferOverlay(DrawResult);
 		break;
 	}
+
+	if (g_Mode == MODE_GAME)
+		DrawBackBufferOverlay(DrawGameOverlay);
 
 	// フェード処理の描画
 	{
@@ -398,6 +430,9 @@ char* GetDebugStr(void)
 //=============================================================================
 void SetMode(int mode)
 {
+	if (g_Mode == MODE_GAME && mode == MODE_RESULT)
+		SetResultStats(GetEnemyWave(), GetScore());
+	SetGameDebugOpen(false);
 	UninitGame();
 
 	g_Mode = mode;
@@ -408,6 +443,7 @@ void SetMode(int mode)
 		EnableMouseLock(FALSE);
 		UninitTitle();
 		InitTitle();
+		PlayGameSound(SOUND_LABEL_BGM_title);
 		break;
 
 	case MODE_GAME:
@@ -416,14 +452,12 @@ void SetMode(int mode)
 		InitGame();
 		if (g_bAppHasFocus)
 		{
-			EnableMouseLock(TRUE);
+			EnableMouseLock(!IsGameDebugOpen());
 		}
 		break;
 
 	case MODE_RESULT:
 		EnableMouseLock(FALSE);
-		UninitResult();
-		InitResult();
 		break;
 
 	case MODE_MAX:

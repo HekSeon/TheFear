@@ -57,12 +57,7 @@ HRESULT InitShadow(void)
 	// テクスチャ生成
 	for (int i = 0; i < TEXTURE_MAX; i++)
 	{
-		D3DX11CreateShaderResourceViewFromFile(GetDevice(),
-			g_TextureName[i],
-			NULL,
-			NULL,
-			&g_Texture[i],
-			NULL);
+		LoadGameTexture(g_TextureName[i], &g_Texture[i]);
 	}
 
 	// 影ワーク初期化

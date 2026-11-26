@@ -37,6 +37,8 @@ enum
 //*****************************************************************************
 BOOL InitSound(HWND hWnd);
 void UninitSound(void);
-void PlaySound(int label);
+void PlayGameSound(int label);
 void StopSound(int label);
 void StopSound(void);
+int GetMasterVolumePercent(void);
+void SetMasterVolumePercent(int percent);

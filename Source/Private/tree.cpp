@@ -4,6 +4,7 @@
 // Author : BAYAR "HekSeon" SEMIH
 //
 //=============================================================================
+#include <DirectXCollision.h>
 #include <random>
 
 #include "main.h"
@@ -21,11 +22,6 @@
 //*****************************************************************************
 // マクロ定義
 //*****************************************************************************
-#define TEXTURE_MAX			(5)				// テクスチャの数
-
-#define	TREE_WIDTH			(50.0f)			// 頂点サイズ
-#define	TREE_HEIGHT			(80.0f)			// 頂点サイズ
-
 #define	MAX_TREE			(1024)			// 木最大数
 
 //*****************************************************************************
@@ -39,54 +35,75 @@ typedef struct
 	float		fWidth;			// 幅
 	float		fHeight;		// 高さ
 	int			nIdxShadow;		// 影ID
-	BOOL		load;
 	BOOL		use;			// 使用しているかどうか
-	DX11_MODEL			model;
-	XMFLOAT4			diffuse[MODEL_MAX_MATERIAL];
 
 } TREE;
 
 //*****************************************************************************
 // プロトタイプ宣言
 //*****************************************************************************
-HRESULT MakeVertexTree(void);
 
 //*****************************************************************************
 // グローバル変数
 //*****************************************************************************
 #define MODEL_TREE "data/MODEL/tree.obj"
-static ID3D11Buffer					*g_VertexBuffer = NULL;	// 頂点バッファ
-static ID3D11ShaderResourceView		*g_Texture[TEXTURE_MAX] = { NULL };	// テクスチャ情報
+static ID3D11Buffer* g_TreeLodBuffer = nullptr;
 
+static DX11_MODEL g_TreeModel{};
 static TREE					g_aTree[MAX_TREE];	// 木ワーク
-static int					g_TexNo;			// テクスチャ番号
 static BOOL					g_bAlpaTest;		// アルファテストON/OFF
 //static int					g_nAlpha;			// アルファテストの閾値
 
-static char *g_TextureName[] =
+namespace
 {
-	"data/MODEL/tree.obj",
+constexpr float DetailDistance = 750.0f;
+constexpr float CullDistance = 2600.0f;
+constexpr XMFLOAT4 Bark = {0.21f, 0.14f, 0.06f, 1.0f};
+constexpr XMFLOAT4 Leaves = {0.26f, 0.44f, 0.11f, 1.0f};
+
+struct TreeLodVertex
+{
+    XMFLOAT2 position;
+    XMFLOAT4 color;
 };
+
+constexpr TreeLodVertex TreeSilhouette[] = {
+    {{-5, 0}, Bark}, {{5, 0}, Bark}, {{4, 53}, Bark},
+    {{-5, 0}, Bark}, {{4, 53}, Bark}, {{-3, 53}, Bark},
+    {{-5, 26}, Bark}, {{-29, 52}, Bark}, {{-21, 52}, Bark},
+    {{3, 32}, Bark}, {{28, 58}, Bark}, {{22, 61}, Bark},
+    {{-42, 46}, Leaves}, {{-31, 68}, Leaves}, {{-5, 67}, Leaves},
+    {{-42, 46}, Leaves}, {{-5, 67}, Leaves}, {{-4, 48}, Leaves},
+    {{-21, 56}, Leaves}, {{-12, 76}, Leaves}, {{17, 77}, Leaves},
+    {{-21, 56}, Leaves}, {{17, 77}, Leaves}, {{20, 54}, Leaves},
+    {{6, 48}, Leaves}, {{18, 67}, Leaves}, {{42, 57}, Leaves},
+    {{6, 48}, Leaves}, {{42, 57}, Leaves}, {{34, 45}, Leaves},
+};
+}
 
 //=============================================================================
 // 初期化処理
 //=============================================================================
 HRESULT InitTree(void)
 {
-	// 1. Önce tüm ağaç havuzunu ve modellerini bir kez yükleyip hazırlayalım
+	LoadModel(MODEL_TREE, &g_TreeModel);
+
+	D3D11_BUFFER_DESC lodDesc{};
+	lodDesc.ByteWidth = sizeof(VERTEX_3D) * _countof(TreeSilhouette) * MAX_TREE;
+	lodDesc.Usage = D3D11_USAGE_DYNAMIC;
+	lodDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	lodDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	GetDevice()->CreateBuffer(&lodDesc, nullptr, &g_TreeLodBuffer);
 	for (int nCntTree = 0; nCntTree < MAX_TREE; nCntTree++)
 	{
-		LoadModel(MODEL_TREE, &g_aTree[nCntTree].model);
-		g_aTree[nCntTree].load = TRUE;
 		g_aTree[nCntTree].material.Diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 		g_aTree[nCntTree].scl = XMFLOAT3(0.3f, 0.3f, 0.3f); // Ağaç ölçeği
 		g_aTree[nCntTree].use = FALSE; // Başlangıçta pasif
-		GetModelDiffuse(&g_aTree[nCntTree].model, &g_aTree[nCntTree].diffuse[0]);
 	}
 
 	// 木の設定
 	const float worldSize = 4000.0f;          // Dünya sınırı (-500 ile +500)
-	const int maxTrees = 350;                // Yerleştirilecek ağaç sayısı
+	const int maxTrees = 1000;                // Yerleştirilecek ağaç sayısı
 	const float minDistance = 130.0f;
 	const int maxAttempts = 150;
 
@@ -156,19 +173,16 @@ HRESULT InitTree(void)
 //=============================================================================
 void UninitTree(void)
 {
-	for(int nCntTex = 0; nCntTex < TEXTURE_MAX; nCntTex++)
+	if (g_TreeModel.SubsetArray)
 	{
-		if(g_Texture[nCntTex] != NULL)
-		{// テクスチャの解放
-			g_Texture[nCntTex]->Release();
-			g_Texture[nCntTex] = NULL;
-		}
+		UnloadModel(&g_TreeModel);
+		g_TreeModel = {};
 	}
 
-	if(g_VertexBuffer != NULL)
-	{// 頂点バッファの解放
-		g_VertexBuffer->Release();
-		g_VertexBuffer = NULL;
+	if (g_TreeLodBuffer)
+	{
+		g_TreeLodBuffer->Release();
+		g_TreeLodBuffer = nullptr;
 	}
 }
 
@@ -215,110 +229,83 @@ void UpdateTree(void)
 //=============================================================================
 void DrawTree(void)
 {
-	// αテスト設定
-	if (g_bAlpaTest == TRUE)
-	{
-		SetAlphaTestEnable(TRUE);
-	}
+    if (g_bAlpaTest)
+        SetAlphaTestEnable(TRUE);
+    SetLightEnable(FALSE);
 
-	// ライティングを無効
-	SetLightEnable(FALSE);
+    const CAMERA& camera = *GetCamera();
+    const XMMATRIX view = XMLoadFloat4x4(&camera.mtxView);
+    XMMATRIX billboard = XMLoadFloat4x4(&camera.mtxInvView);
+    billboard.r[3] = XMVectorSet(0, 0, 0, 1);
+    const XMVECTOR eye = XMLoadFloat3(&camera.pos);
+    BoundingFrustum frustum;
+    BoundingFrustum::CreateFromMatrix(frustum, XMLoadFloat4x4(&camera.mtxProjection));
+    const TREE* distant[MAX_TREE];
+    UINT distantCount = 0;
 
-	XMMATRIX mtxScl, mtxTranslate, mtxWorld, mtxView;
-	CAMERA* cam = GetCamera();
+    for (const TREE& tree : g_aTree)
+    {
+        if (!tree.use) continue;
+        const XMVECTOR origin = XMLoadFloat3(&tree.pos);
+        const float distanceSq = XMVectorGetX(XMVector3LengthSq(origin - eye));
+        if (distanceSq > CullDistance * CullDistance) continue;
 
-	// DİKKAT: Burada eskiden kalan g_VertexBuffer (NULL) ataması model çizimini bozar, sildik.
+        BoundingSphere bounds;
+        XMStoreFloat3(&bounds.Center, XMVector3TransformCoord(origin, view) + XMVectorSet(0, 38, 0, 0));
+        bounds.Radius = 72.0f;
+        if (frustum.Contains(bounds) == DISJOINT) continue;
 
-	// プリミティブトポロジ設定 (Model çiziminde genellikle gerekmez ama kalabilir)
-	// GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+        if (g_TreeLodBuffer && distanceSq > DetailDistance * DetailDistance)
+        {
+            distant[distantCount++] = &tree;
+            continue;
+        }
 
-	for (int i = 0; i < MAX_TREE; i++)
-	{
-		if (g_aTree[i].use)
-		{
-			mtxWorld = XMMatrixIdentity();
-			mtxView = XMLoadFloat4x4(&cam->mtxView);
+        XMMATRIX world = billboard * XMMatrixScaling(tree.scl.x, tree.scl.y, tree.scl.z) *
+            XMMatrixTranslationFromVector(origin);
+        SetWorldMatrix(&world);
+        DrawModel(&g_TreeModel);
+    }
 
-			mtxWorld.r[0].m128_f32[0] = mtxView.r[0].m128_f32[0];
-			mtxWorld.r[0].m128_f32[1] = mtxView.r[1].m128_f32[0];
-			mtxWorld.r[0].m128_f32[2] = mtxView.r[2].m128_f32[0];
+    if (distantCount > 0)
+    {
+        auto context = GetDeviceContext();
+        D3D11_MAPPED_SUBRESOURCE mapped;
+        if (SUCCEEDED(context->Map(g_TreeLodBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped)))
+        {
+            auto vertices = static_cast<VERTEX_3D*>(mapped.pData);
+            for (UINT i = 0; i < distantCount; ++i)
+            {
+                const XMVECTOR origin = XMLoadFloat3(&distant[i]->pos);
+                for (const TreeLodVertex& vertex : TreeSilhouette)
+                {
+                    const XMVECTOR local = XMVectorSet(vertex.position.x, vertex.position.y, 0, 0);
+                    XMStoreFloat3(&vertices->Position, origin + XMVector3TransformNormal(local, billboard));
+                    vertices->Normal = {0, 0, -1};
+                    vertices->Diffuse = vertex.color;
+                    vertices->TexCoord = {};
+                    ++vertices;
+                }
+            }
+            context->Unmap(g_TreeLodBuffer, 0);
 
-			mtxWorld.r[1].m128_f32[0] = mtxView.r[0].m128_f32[1];
-			mtxWorld.r[1].m128_f32[1] = mtxView.r[1].m128_f32[1];
-			mtxWorld.r[1].m128_f32[2] = mtxView.r[2].m128_f32[1];
+            XMMATRIX world = XMMatrixIdentity();
+            SetWorldMatrix(&world);
+            MATERIAL material{};
+            material.Diffuse = {1, 1, 1, 1};
+            material.noTexSampling = 1;
+            SetMaterial(material);
+            SetCullingMode(CULL_MODE_NONE);
+            const UINT stride = sizeof(VERTEX_3D), offset = 0;
+            context->IASetVertexBuffers(0, 1, &g_TreeLodBuffer, &stride, &offset);
+            context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+            context->Draw(distantCount * _countof(TreeSilhouette), 0);
+            SetCullingMode(CULL_MODE_BACK);
+        }
+    }
 
-			mtxWorld.r[2].m128_f32[0] = mtxView.r[0].m128_f32[2];
-			mtxWorld.r[2].m128_f32[1] = mtxView.r[1].m128_f32[2];
-			mtxWorld.r[2].m128_f32[2] = mtxView.r[2].m128_f32[2];
-
-			mtxScl = XMMatrixScaling(g_aTree[i].scl.x, g_aTree[i].scl.y, g_aTree[i].scl.z);
-			mtxWorld = XMMatrixMultiply(mtxWorld, mtxScl);
-
-			mtxTranslate = XMMatrixTranslation(g_aTree[i].pos.x, g_aTree[i].pos.y, g_aTree[i].pos.z);
-			mtxWorld = XMMatrixMultiply(mtxWorld, mtxTranslate);
-
-			SetWorldMatrix(&mtxWorld);
-
-			DrawModel(&g_aTree[i].model);
-		}
-	}
-
-	SetFogEnable(TRUE);
-	SetLightEnable(TRUE);
-	SetAlphaTestEnable(FALSE);
-}
-
-//=============================================================================
-// 頂点情報の作成
-//=============================================================================
-HRESULT MakeVertexTree(void)
-{
-	// 頂点バッファ生成
-	D3D11_BUFFER_DESC bd;
-	ZeroMemory(&bd, sizeof(bd));
-	bd.Usage = D3D11_USAGE_DYNAMIC;
-	bd.ByteWidth = sizeof(VERTEX_3D) * 4;
-	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-
-	GetDevice()->CreateBuffer(&bd, NULL, &g_VertexBuffer);
-
-	// 頂点バッファに値をセットする
-	D3D11_MAPPED_SUBRESOURCE msr;
-	GetDeviceContext()->Map(g_VertexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &msr);
-
-	VERTEX_3D* vertex = (VERTEX_3D*)msr.pData;
-
-	float fWidth = 60.0f;
-	float fHeight = 90.0f;
-
-	// 頂点座標の設定
-	vertex[0].Position = XMFLOAT3(-fWidth / 2.0f, fHeight, 0.0f);
-	vertex[1].Position = XMFLOAT3(fWidth / 2.0f, fHeight, 0.0f);
-	vertex[2].Position = XMFLOAT3(-fWidth / 2.0f, 0.0f, 0.0f);
-	vertex[3].Position = XMFLOAT3(fWidth / 2.0f, 0.0f, 0.0f);
-
-	// 法線の設定
-	vertex[0].Normal = XMFLOAT3(0.0f, 0.0f, -1.0f);
-	vertex[1].Normal = XMFLOAT3(0.0f, 0.0f, -1.0f);
-	vertex[2].Normal = XMFLOAT3(0.0f, 0.0f, -1.0f);
-	vertex[3].Normal = XMFLOAT3(0.0f, 0.0f, -1.0f);
-
-	// 拡散光の設定
-	vertex[0].Diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-	vertex[1].Diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-	vertex[2].Diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-	vertex[3].Diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-
-	// テクスチャ座標の設定
-	vertex[0].TexCoord = XMFLOAT2(0.0f, 0.0f);
-	vertex[1].TexCoord = XMFLOAT2(1.0f, 0.0f);
-	vertex[2].TexCoord = XMFLOAT2(0.0f, 1.0f);
-	vertex[3].TexCoord = XMFLOAT2(1.0f, 1.0f);
-
-	GetDeviceContext()->Unmap(g_VertexBuffer, 0);
-
-	return S_OK;
+    SetLightEnable(TRUE);
+    SetBlendState(BLEND_MODE_ALPHABLEND);
 }
 
 //=============================================================================
