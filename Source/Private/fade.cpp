@@ -9,6 +9,7 @@
 #include "fade.h"
 #include "sound.h"
 #include "sprite.h"
+#include "result.h"
 
 //*****************************************************************************
 // マクロ定義 (Macros)
@@ -51,12 +52,7 @@ HRESULT InitFade(void)
 	for (int i = 0; i < TEXTURE_MAX; i++)
 	{
 		g_Texture[i] = NULL;
-		D3DX11CreateShaderResourceViewFromFile(GetDevice(),
-			g_TexturName[i],
-			NULL,
-			NULL,
-			&g_Texture[i],
-			NULL);
+		LoadGameTexture(g_TexturName[i], &g_Texture[i]);
 	}
 
 	// 頂点バッファ生成
@@ -127,6 +123,8 @@ void UpdateFade(void)
 				SetFade(FADE_IN, g_ModeNext);
 
 				// モードを設定
+				if (g_ModeNext == MODE_GAME)
+					ShowLoadingScreen();
 				SetMode(g_ModeNext);
 			}
 		}
@@ -181,7 +179,7 @@ void DrawFade(void)
 
 		// 1枚のポリゴンの頂点とテクスチャ座標を設定
 		//SetVertex(0.0f, 0.0f, SCREEN_WIDTH, TEXTURE_WIDTH, 0.0f, 0.0f, 1.0f, 1.0f);
-		SetSpriteColor(g_VertexBuffer, SCREEN_WIDTH / 2, TEXTURE_WIDTH / 2, SCREEN_WIDTH, TEXTURE_WIDTH, 0.0f, 0.0f, 1.0f, 1.0f, g_Color);
+		SetSpriteColor(g_VertexBuffer, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, SCREEN_WIDTH, SCREEN_HEIGHT, 0.0f, 0.0f, 1.0f, 1.0f, g_Color);
 
 		// ポリゴン描画
 		GetDeviceContext()->Draw(4, 0);

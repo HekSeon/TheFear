@@ -1,165 +1,132 @@
-﻿//=============================================================================
-//
-// リザルト画面処理 [result.cpp]
-// Author : BAYAR "HekSeon" SEMIH
-//
-//=============================================================================
-#include "main.h"
-#include "renderer.h"
-#include "result.h"
-#include "input.h"
+﻿#include "result.h"
 #include "fade.h"
-#include "sound.h"
-#include "sprite.h"
+#include "input.h"
+#include "renderer.h"
 
-//*****************************************************************************
-// マクロ定義
-//*****************************************************************************
-#define TEXTURE_WIDTH				(SCREEN_WIDTH)	// 背景サイズ
-#define TEXTURE_HEIGHT				(SCREEN_HEIGHT)	// 
-#define TEXTURE_MAX					(3)				// テクスチャの数
-#define TEXTURE_WIDTH_LOGO			(480)			// ロゴサイズ
-#define TEXTURE_HEIGHT_LOGO			(80)			// 
-
-//*****************************************************************************
-// プロトタイプ宣言
-//*****************************************************************************
-
-//*****************************************************************************
-// グローバル変数
-//*****************************************************************************
-static ID3D11Buffer* g_VertexBuffer = NULL;		// 頂点情報
-static ID3D11ShaderResourceView* g_Texture[TEXTURE_MAX] = { NULL };	// テクスチャ情報
-static char* g_TexturName[TEXTURE_MAX] = {
-	"data/TEXTURE/gameover.jpg",
-	"data/TEXTURE/resultlogo.png",
-	"data/TEXTURE/number16x32.png",
-};
-static BOOL						g_Use;						// TRUE:使っている  FALSE:未使用
-static float					g_w, g_h;					// 幅と高さ
-static XMFLOAT3					g_Pos;						// ポリゴンの座標
-static int						g_TexNo;					// テクスチャ番号
-static BOOL						g_Load = FALSE;
-
-//=============================================================================
-// 初期化処理
-//=============================================================================
-HRESULT InitResult(void)
+namespace
 {
-	ID3D11Device* pDevice = GetDevice();
+constexpr int Center = SCREEN_WIDTH / 2;
+constexpr COLORREF Ink = RGB(233, 230, 218);
+constexpr COLORREF Muted = RGB(163, 173, 160);
+constexpr COLORREF Accent = RGB(224, 107, 91);
+constexpr RECT RetryButton = {Center - 320, 744, Center - 10, 818};
+constexpr RECT MenuButton = {Center + 10, 744, Center + 320, 818};
+int finalWave = 0;
+int finalScore = 0;
 
-	// テクスチャ生成
-	for (int i = 0; i < TEXTURE_MAX; i++)
-	{
-		g_Texture[i] = NULL;
-		D3DX11CreateShaderResourceViewFromFile(GetDevice(),
-			g_TexturName[i],
-			NULL,
-			NULL,
-			&g_Texture[i],
-			NULL);
-	}
-
-
-	// 頂点バッファ生成
-	D3D11_BUFFER_DESC bd;
-	ZeroMemory(&bd, sizeof(bd));
-	bd.Usage = D3D11_USAGE_DYNAMIC;
-	bd.ByteWidth = sizeof(VERTEX_3D) * 4;
-	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	GetDevice()->CreateBuffer(&bd, NULL, &g_VertexBuffer);
-
-
-	// 変数の初期化
-	g_Use = TRUE;
-	g_w = TEXTURE_WIDTH;
-	g_h = TEXTURE_HEIGHT;
-	g_TexNo = 0;
-
-
-	g_Load = TRUE;
-	return S_OK;
+void Fill(HDC dc, const RECT& rect, COLORREF color)
+{
+    SetDCBrushColor(dc, color);
+    FillRect(dc, &rect, static_cast<HBRUSH>(GetStockObject(DC_BRUSH)));
 }
 
-//=============================================================================
-// 終了処理
-//=============================================================================
-void UninitResult(void)
+void Text(HDC dc, RECT rect, const char* label, int size, COLORREF color, bool bold = false)
 {
-	if (g_Load == FALSE) return;
-
-	if (g_VertexBuffer)
-	{
-		g_VertexBuffer->Release();
-		g_VertexBuffer = NULL;
-	}
-
-	for (int i = 0; i < TEXTURE_MAX; i++)
-	{
-		if (g_Texture[i])
-		{
-			g_Texture[i]->Release();
-			g_Texture[i] = NULL;
-		}
-	}
-
-	g_Load = FALSE;
+    HFONT font = CreateFontA(-size, 0, 0, 0, bold ? FW_SEMIBOLD : FW_NORMAL,
+        FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
+        ANTIALIASED_QUALITY, DEFAULT_PITCH | FF_SWISS, "Segoe UI");
+    HGDIOBJ previous = font ? SelectObject(dc, font) : nullptr;
+    SetBkMode(dc, TRANSPARENT);
+    SetTextColor(dc, color);
+    DrawTextA(dc, label, -1, &rect, DT_CENTER | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
+    if (font)
+    {
+        SelectObject(dc, previous);
+        DeleteObject(font);
+    }
 }
 
-//=============================================================================
-// 更新処理
-//=============================================================================
+void Ridge(HDC dc, const POINT* points, int count, COLORREF color)
+{
+    HGDIOBJ pen = SelectObject(dc, GetStockObject(NULL_PEN));
+    HGDIOBJ brush = SelectObject(dc, GetStockObject(DC_BRUSH));
+    SetDCBrushColor(dc, color);
+    Polygon(dc, points, count);
+    SelectObject(dc, brush);
+    SelectObject(dc, pen);
+}
+
+void Backdrop(HDC dc)
+{
+    constexpr int bandHeight = 24;
+    for (int y = 0; y < SCREEN_HEIGHT; y += bandHeight)
+    {
+        const int shade = y * 18 / SCREEN_HEIGHT;
+        Fill(dc, {0, y, SCREEN_WIDTH, y + bandHeight}, RGB(14 - shade / 2, 25 - shade, 23 - shade));
+    }
+
+    const POINT farHills[] = {{0, 710}, {230, 621}, {435, 691}, {650, 630},
+        {876, 735}, {1120, 700}, {1450, 572}, {1710, 669}, {SCREEN_WIDTH, 606},
+        {SCREEN_WIDTH, SCREEN_HEIGHT}, {0, SCREEN_HEIGHT}};
+    const POINT nearHills[] = {{0, 817}, {255, 730}, {540, 839}, {890, 875},
+        {1222, 822}, {1580, 742}, {SCREEN_WIDTH, 824},
+        {SCREEN_WIDTH, SCREEN_HEIGHT}, {0, SCREEN_HEIGHT}};
+    Ridge(dc, farHills, _countof(farHills), RGB(14, 21, 18));
+    Ridge(dc, nearHills, _countof(nearHills), RGB(9, 14, 13));
+}
+
+void DrawLoading(HDC dc)
+{
+    Backdrop(dc);
+    Text(dc, {Center - 360, 390, Center + 360, 502}, "THE FEAR", 88, Ink, true);
+    Fill(dc, {Center - 24, 533, Center + 24, 536}, Accent);
+    Text(dc, {Center - 360, 561, Center + 360, 620}, "LOADING ARENA...", 24, Muted, true);
+}
+
+void Stat(HDC dc, const RECT& rect, const char* label, int value)
+{
+    Fill(dc, rect, RGB(20, 28, 24));
+    Text(dc, {rect.left, rect.top + 10, rect.right, rect.top + 48}, label, 20, Muted, true);
+    char number[24];
+    sprintf_s(number, "%d", value);
+    Text(dc, {rect.left, rect.top + 46, rect.right, rect.bottom - 8}, number, 48, Ink, true);
+}
+}
+
+void SetResultStats(int wave, int score)
+{
+    finalWave = wave;
+    finalScore = score;
+}
+
 void UpdateResult(void)
 {
-	if (GetKeyboardTrigger(DIK_RETURN))
-	{	// Enter押したら、画面を切り替える
-		SetFade(FADE_OUT, MODE_TITLE);
-	}
-	// ゲームパッドでの入力処理
-	else if (IsButtonTriggered(0, BUTTON_START))
-	{
-		SetFade(FADE_OUT, MODE_TITLE);
-	}
-	else if (IsButtonTriggered(0, BUTTON_B))
-	{
-		SetFade(FADE_OUT, MODE_TITLE);
-	}
-
-#ifdef _DEBUG	// デバッグ情報を表示する
-#endif
+    if (GetFade() != FADE_NONE) return;
+    if (GetKeyboardTrigger(DIK_RETURN) || IsButtonTriggered(0, BUTTON_START))
+        SetFade(FADE_OUT, MODE_GAME);
+    else if (GetKeyboardTrigger(DIK_M) || IsButtonTriggered(0, BUTTON_B))
+        SetFade(FADE_OUT, MODE_TITLE);
 }
 
-//=============================================================================
-// 描画処理
-//=============================================================================
-void DrawResult(void)
+void HandleResultClick(HWND window, int x, int y)
 {
-	// 頂点バッファ設定
-	UINT stride = sizeof(VERTEX_3D);
-	UINT offset = 0;
-	GetDeviceContext()->IASetVertexBuffers(0, 1, &g_VertexBuffer, &stride, &offset);
+    if (GetFade() != FADE_NONE) return;
+    RECT client;
+    if (!GetClientRect(window, &client) || client.right <= 0 || client.bottom <= 0) return;
+    const POINT cursor = {MulDiv(x, SCREEN_WIDTH, client.right), MulDiv(y, SCREEN_HEIGHT, client.bottom)};
+    if (PtInRect(&RetryButton, cursor))
+        SetFade(FADE_OUT, MODE_GAME);
+    else if (PtInRect(&MenuButton, cursor))
+        SetFade(FADE_OUT, MODE_TITLE);
+}
 
-	// マトリクス設定
-	SetWorldViewProjection2D();
+void DrawResult(HDC dc)
+{
+    Backdrop(dc);
+    Fill(dc, {Center - 24, 272, Center + 24, 275}, Accent);
+    Text(dc, {Center - 420, 294, Center + 420, 429}, "YOU DIED", 112, Ink, true);
+    Stat(dc, {Center - 320, 527, Center - 10, 670}, "WAVE REACHED", finalWave);
+    Stat(dc, {Center + 10, 527, Center + 320, 670}, "SCORE", finalScore);
 
-	// プリミティブトポロジ設定
-	GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+    Fill(dc, RetryButton, Accent);
+    Fill(dc, MenuButton, RGB(28, 40, 34));
+    Text(dc, RetryButton, "RETRY  [ENTER]", 25, RGB(18, 20, 17), true);
+    Text(dc, MenuButton, "MAIN MENU  [M]", 25, Ink, true);
+}
 
-	// マテリアル設定
-	MATERIAL material;
-	ZeroMemory(&material, sizeof(material));
-	material.Diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-	SetMaterial(material);
-
-	// リザルトの背景を描画
-
-	// テクスチャ設定
-	GetDeviceContext()->PSSetShaderResources(0, 1, &g_Texture[0]);
-
-	// 1枚のポリゴンの頂点とテクスチャ座標を設定
-	SetSpriteLeftTop(g_VertexBuffer, 0.0f, 0.0f, g_w, g_h, 0.0f, 0.0f, 1.0f, 1.0f);
-
-	// ポリゴン描画
-	GetDeviceContext()->Draw(4, 0);
+void ShowLoadingScreen(void)
+{
+    Clear();
+    DrawBackBufferOverlay(DrawLoading);
+    Present();
 }

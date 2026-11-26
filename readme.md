@@ -1,4 +1,4 @@
-<h1 align="center">🎮 TheFear — DX11 3D C++ ゲーム</h1>
+﻿<h1 align="center">🎮 TheFear — DX11 3D C++ ゲーム</h1>
 
 
 
@@ -9,6 +9,10 @@
 低レベルグラフィック × ゲームロジック × 手動エンジン構造
 
 </p>
+
+## プレイ動画
+
+[YouTube でプレイ動画を見る](https://youtu.be/-nILsROeQO4)
 
 
 
@@ -58,7 +62,7 @@ TheFearは、C++とDirectX11を使用して制作した実験的プロジェク�
 
 \### 🎮 ゲームロジックと入力
 
-\- キーボード入力処理 (W/A/S/D + Spaceでジャンプ)  
+\- キーボード入力処理 (W/A/S/D で移動、左クリックで近接攻撃、Space で剣を発射、F2 でデバッグ表示)
 
 \- 手動でのゲームループ設計（UpdateとRenderの分離）  
 
@@ -102,7 +106,7 @@ TheFearは、C++とDirectX11を使用して制作した実験的プロジェク�
 
 | グラフィック | DirectX11, HLSL Shader |
 
-| ビルド | Visual Studio Solution (.sln) |
+| ビルド | CMake / Visual Studio |
 
 | 入力 | Win32 Keyboard / Mouse |
 
@@ -143,7 +147,7 @@ TheFear/
 │ └── models/ # 3Dモデル（オプション）
 ├── shader.hlsl # HLSLシェーダー
 
-├── TheFear.sln # Visual Studioソリューション
+├── CMakeLists.txt # CMake ビルド設定
 
 └── README.md
 
@@ -157,29 +161,16 @@ TheFear/
 
 
 
-\### 🔹 ソースからビルド
+### ソースからビルド
 
-```bash
+ビルドには Visual Studio 2026 の C++ ツールと Windows SDK 10.0.26100.0 が必要です。
 
-git clone https://github.com/HekSeon/TheFear.git
+~~~powershell
+cmake -S . -B build -G "Visual Studio 18 2026" -A x64
+cmake --build build --config Release
+~~~
 
-```
-
-Visual Studioで TheFear.sln を開く
-
-
-
-ビルド構成を選択（Debug / Release）
-
-
-
-ビルドして実行
-
-
-
-注意: shader.hlsl は実行ファイルと同じパスに配置してください
-
-
+`build/Release` に `TheFear.exe`、`data/`、`shader.hlsl` が出力されます。実行ファイルのあるフォルダーを作業ディレクトリにして実行してください。
 
 🔹 注意事項
 
@@ -189,7 +180,13 @@ Windows 10、DirectX11対応環境で動作確認済み
 
 
 
-外部依存関係は不要
+プレイには Windows 10 または Windows 11 が必要です。Visual Studio や June 2010 DirectX ランタイムのインストールは不要です。
+
+配布用フォルダーは次のコマンドで作成できます。作成されたフォルダー全体を配布してください。
+
+~~~powershell
+cmake --install build --config Release --prefix build/package
+~~~
 
 
 

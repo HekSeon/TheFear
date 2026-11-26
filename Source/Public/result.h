@@ -1,21 +1,9 @@
-﻿///////////////////////////////////
-// 
-// result.h
-// 
-// Author: BAYAR "HekSeon" SEMIH
-///////////////////////////////////
-#pragma once
+﻿#pragma once
 
-#include "main.h" // HRESULT yapısı için gerekli[cite: 2, 10]
+#include "main.h"
 
-//*****************************************************************************
-// マクロ定義
-//*****************************************************************************
-
-//*****************************************************************************
-// プロトタイプ宣言
-//*****************************************************************************
-HRESULT InitResult(void);
-void UninitResult(void);
+void SetResultStats(int wave, int score);
 void UpdateResult(void);
-void DrawResult(void);
+void HandleResultClick(HWND window, int x, int y);
+void DrawResult(HDC dc);
+void ShowLoadingScreen(void);

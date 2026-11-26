@@ -183,8 +183,6 @@ int GetViewPortType(void)
 
 void SetCameraAT(XMFLOAT3 pos, int x, int y, int z)
 {
-	ProcessMouseMovement();
-
 	g_Camera.at = pos;
 
 	g_Camera.pos.x = g_Camera.at.x - sinf(g_Camera.rot.y) * g_Camera.len;
@@ -195,19 +193,24 @@ void SetCameraAT(XMFLOAT3 pos, int x, int y, int z)
 void ProcessMouseMovement()
 {
 	// 🟢 ODAK YOKSA FAREYİ MERKEZLEMEYİ VE HESAPLAMALARI DİREKT DURDUR
-	if (!IsAppFocused())
+	static bool firstMouse = true;
+	if (!IsAppFocused() || IsGameDebugOpen())
 	{
+		firstMouse = true;
 		return;
 	}
-
-	static bool firstMouse = true;
 	const float mouseSensitivity = 0.002f; // Fare hassasiyeti
 
 	POINT mousePos;
 	GetCursorPos(&mousePos);
 
-	int centerX = SCREEN_WIDTH / 2;
-	int centerY = SCREEN_HEIGHT / 2;
+	HWND window = GetFocus();
+	RECT client;
+	if (!window || !GetClientRect(window, &client)) return;
+	POINT center = {client.right / 2, client.bottom / 2};
+	if (!ClientToScreen(window, &center)) return;
+	const int centerX = center.x;
+	const int centerY = center.y;
 
 	// İlk karede fareyi sıフ ırla
 	if (firstMouse) {

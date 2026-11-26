@@ -1,391 +1,239 @@
-﻿///////////////////////////////////
-// 
-// enemy.cpp
-// 
-// Author: BAYAR "HekSeon" SEMIH
-///////////////////////////////////
-#include "main.h"
-#include "renderer.h"
-#include "input.h"
-#include "debugproc.h"
+﻿#include "main.h"
+#include <algorithm>
 #include "enemy.h"
-#include "shadow.h"
-#include "game.h"
-#include "fade.h"
-#include "sound.h"
-#include "player.h"
 #include "collision.h"
-#include "sword.h"
-#include "score.h"
 #include "meshfield.h"
-//#include "particle.h"
+#include "player.h"
+#include "score.h"
+#include <initializer_list>
 
-//*****************************************************************************
-// マクロ定義
-//*****************************************************************************
-#define	MODEL_ENEMY			"data/MODEL/enemy/bear.obj"		// 読み込むモデル名
+namespace
+{
+constexpr float EnemySpeed = 1.15f;
+constexpr float EnemyGroundOffset = 16.065f;
+constexpr float PlayerRadius = 6.0f;
+constexpr int FirstWaveSize = 4;
+constexpr int MaxWaveSize = 24;
+constexpr int WaveRest = 150;
+constexpr int AttackImpact = 19;
+constexpr int AttackDuration = 48;
 
+struct BearPart
+{
+    unsigned firstSubset;
+    unsigned subsetCount;
+    XMFLOAT3 pivot;
+    float walkSwing;
+    float attackSwing;
+};
 
-#define	VALUE_MOVE			(5.0f)						// 移動量
-#define	VALUE_ROTATE		(XM_PI * 0.02f)				// 回転量
+// Material subset order in data/MODEL/enemy/bear.obj. The face and ears
+// occupy two ranges because the body and arms appear between them.
+const BearPart parts[] = {
+    {0, 9, {0, -2, 0}, 0.04f, 0.20f},  // Head, face, and first ear
+    {9, 1, {}, 0.0f, 0.12f},            // Torso
+    {10, 1, {11, -3.5f, 0}, 0.28f, 0.20f},
+    {11, 1, {-11, -3.5f, 0}, -0.28f, -1.3f},
+    {12, 4, {0, -2, 0}, 0.04f, 0.20f}, // Other eye and ear
+    {16, 1, {0, -17, -8}, 0.10f, 0.0f}, // Tail
+    {17, 1, {5, -23.5f, 0}, -0.35f, 0.0f},
+    {18, 1, {-5, -23.5f, 0}, 0.35f, 0.0f},
+};
 
-#define ENEMY_SHADOW_SIZE	(0.4f)						// 影の大きさ
-#define ENEMY_OFFSET_Y		(7.0f)						// エネミーの足元をあわせる
+DX11_MODEL bearModel = {};
+bool modelsLoaded = false;
+ENEMY enemies[MAX_ENEMY] = {};
+int wave = 0;
+int alive = 0;
+int restFrames = 0;
 
-				// エネミーの数
-#define INITIAL_ENEMIES 20    // Başlangıç düşman sayısı
-#define SPAWN_INTERVAL 600   // 20 saniye (60 FPS × 20) => Frame sayacı kullanıyoruz
+void StartWave(const XMFLOAT3& center)
+{
+    const int count = FirstWaveSize + std::min(wave, (MaxWaveSize - FirstWaveSize) / 2) * 2;
+    ++wave;
+    const float phase = XM_2PI * (rand() / (RAND_MAX + 1.0f));
+    for (int i = 0; i < count; ++i)
+    {
+        const float angle = phase + XM_2PI * i / count;
+        // Try both sides of the player near the map edge.
+        XMFLOAT3 ground;
+        XMFLOAT3 normal;
+        for (float radius : {240.0f, -240.0f, 120.0f, -120.0f})
+        {
+            XMFLOAT3 spawn = {center.x + sinf(angle) * radius, center.y,
+                             center.z + cosf(angle) * radius};
+            if (!RayHitField(spawn, &ground, &normal)) continue;
+            ENEMY& enemy = enemies[alive++];
+            enemy = {};
+            enemy.pos = {ground.x, ground.y + EnemyGroundOffset, ground.z};
+            enemy.rot.y = atan2f(center.x - ground.x, center.z - ground.z);
+            enemy.health = 100.0f;
+            enemy.use = TRUE;
+            break;
+        }
+    }
+    restFrames = WaveRest;
+}
+} // namespace
 
-#define ENEMY_PUSHBACK_STRENGTH (0.2f)
-
-
-
-//*****************************************************************************
-// プロトタイプ宣言
-//*****************************************************************************
-
-
-//*****************************************************************************
-// グローバル変数
-//*****************************************************************************
-static ENEMY			g_Enemies[MAX_ENEMY];				// エネミー
-
-static BOOL				g_Enemies_load = FALSE;
-
-int currentEnemyCount = 0;    // Şu anki düşman sayısı
-int spawnTimer = 0;           // Zamanlayıcı (frame cinsinden)
-
-bool collisionDetected = false;
-
-// Hız (düşman saniyede kaç birim ilerlesin?)
-float speed = 0.8f;
-
-
-
-
-//=============================================================================
-// 初期化処理
-//=============================================================================
 HRESULT InitEnemy(void)
 {
-	for (int i = 0; i < MAX_ENEMY; i++)
-	{
-		LoadModel(MODEL_ENEMY, &g_Enemies[i].model);
-		g_Enemies[i].load = TRUE;
-
-		g_Enemies[i].pos = XMFLOAT3(rand() % 700 - 550, 15.0f, rand() % 700 - 550); // Rastgele konum
-		g_Enemies[i].rot = XMFLOAT3(0.0f, 0.0f, 0.0f);
-		g_Enemies[i].scl = XMFLOAT3(0.5f, 0.5f, 0.5f);
-
-		g_Enemies[i].spd = 0.0f;			// 移動スピードクリア
-		g_Enemies[i].size = ENEMY_SIZE;	// 当たり判定の大きさ
-		g_Enemies[i].health = 100.0f;
-		g_Enemies[i].isAlive = FALSE;	
-
-		// モデルのディフューズを保存しておく。色変え対応の為。
-		GetModelDiffuse(&g_Enemies[i].model, &g_Enemies[i].diffuse[0]);
-
-		XMFLOAT3 pos = g_Enemies[i].pos;
-		pos.y -= (ENEMY_OFFSET_Y - 0.1f);
-		g_Enemies[i].shadowIdx = CreateShadow(pos, ENEMY_SHADOW_SIZE, ENEMY_SHADOW_SIZE);
-		
-		g_Enemies[i].time = 0.0f;			// 線形補間用のタイマーをクリア
-		g_Enemies[i].tblNo = 0;			// 再生する行動データテーブルNoをセット
-		g_Enemies[i].tblMax = 0;			// 再生する行動データテーブルのレコード数をセット
-
-		g_Enemies[i].use = FALSE;			// TRUE:生きてる
-
-		// 階層アニメーション用の初期化処理
-
-	}
-	
-	SpawnEnemy();
-	return S_OK;
+    LoadModel("data/MODEL/enemy/bear.obj", &bearModel);
+    modelsLoaded = true;
+    for (ENEMY& enemy : enemies)
+        enemy = {};
+    wave = alive = 0;
+    StartWave(GetPlayer()->pos);
+    return S_OK;
 }
 
-//=============================================================================
-// 終了処理
-//=============================================================================
 void UninitEnemy(void)
 {
-
-	for (int i = 0; i < MAX_ENEMY; i++)
-	{
-
-		if (g_Enemies[i].load)
-		{
-			UnloadModel(&g_Enemies[i].model);
-			g_Enemies[i].load = FALSE;
-			
-		}
-	}
-
-
+    if (!modelsLoaded) return;
+    UnloadModel(&bearModel);
+    modelsLoaded = false;
 }
 
-//=============================================================================
-// 更新処理
-//=============================================================================
+XMFLOAT3 GetEnemyAttackCenter(const ENEMY& enemy)
+{
+    return {enemy.pos.x + sinf(enemy.rot.y) * EnemyAttackOffset, enemy.pos.y + 2.0f,
+            enemy.pos.z + cosf(enemy.rot.y) * EnemyAttackOffset};
+}
+
+void DamageEnemy(ENEMY& enemy, float damage)
+{
+    if (!enemy.use) return;
+    enemy.health = std::max(0.0f, enemy.health - damage);
+    if (enemy.health > 0.0f) return;
+    enemy.use = FALSE;
+    --alive;
+    AddScore(100);
+}
+
 void UpdateEnemy(void)
 {
-	PLAYER* player = GetPlayer();
+    PLAYER& player = *GetPlayer();
+    if (!player.use) return;
+    if (alive == 0)
+    {
+        if (--restFrames <= 0)
+            StartWave(player.pos);
+        return;
+    }
 
-	spawnTimer++;
+    for (ENEMY& enemy : enemies)
+    {
+        if (!enemy.use) continue;
+        const float dx = player.pos.x - enemy.pos.x;
+        const float dz = player.pos.z - enemy.pos.z;
+        const float distance = sqrtf(dx * dx + dz * dz);
+        if (distance > 0.01f && enemy.attackFrame < AttackImpact)
+            enemy.rot.y = atan2f(dx, dz);
 
-	for (int i = 0; i < MAX_ENEMY; i++)
-	{
+        if (enemy.attackFrame > 0)
+        {
+            if (++enemy.attackFrame == AttackImpact &&
+                CollisionBC(GetEnemyAttackCenter(enemy), player.pos, EnemyAttackRadius, PlayerRadius))
+                player.health = std::max(0.0f, player.health - 10.0f);
 
+            if (enemy.attackFrame >= AttackDuration)
+                enemy.attackFrame = 0;
+            continue;
+        }
 
-		if (CollisionBB(g_Enemies[i].pos, 1.f, 1.f, player->pos, 1.f, 1.f))
-		{
-			player->health -= 0.01; // Oyuncunun sağlığını azal
-		}
+        if (distance <= EnemyAttackOffset + EnemyAttackRadius)
+        {
+            enemy.attackFrame = 1;
+            continue;
+        }
 
-	
+        XMFLOAT3 next = {enemy.pos.x + dx / distance * EnemySpeed, enemy.pos.y,
+                         enemy.pos.z + dz / distance * EnemySpeed};
+        XMFLOAT3 ground;
+        XMFLOAT3 normal;
+        if (!RayHitField(next, &ground, &normal)) continue;
+        next.y = ground.y + EnemyGroundOffset;
 
-	// 20 saniyede bir düşman ekle
-	if (spawnTimer >= SPAWN_INTERVAL && currentEnemyCount < MAX_ENEMY)
-	{
-		SpawnEnemy();
-	}
-
-	// Düşmanları güncelle
-	
-	if (g_Enemies[i].use)
-	{
-		PLAYER* player = GetPlayer();
-		XMFLOAT3 direction;
-		direction.x = player->pos.x - g_Enemies[i].pos.x;
-		direction.y = player->pos.y - g_Enemies[i].pos.y;
-		direction.z = player->pos.z - g_Enemies[i].pos.z;
-		float length = sqrt(direction.x * direction.x + direction.y * direction.y + direction.z * direction.z);
-
-		if (length > 0.01f) 
-		{
-			direction.x /= length;
-			direction.y /= length;
-			direction.z /= length;
-		}
-
-		if (g_Enemies[i].health <= 0.0f)
-		{
-			g_Enemies[i].isAlive = FALSE;
-			g_Enemies[i].use = FALSE;
-			currentEnemyCount--;
-		}
-
-		// Eski pozisyonu sakla
-		XMFLOAT3 oldPos = g_Enemies[i].pos;
-
-		XMFLOAT3 newPos;
-		newPos.x = g_Enemies[i].pos.x + direction.x * speed;
-		newPos.z = g_Enemies[i].pos.z + direction.z * speed;
-
-		XMFLOAT3 terrainHeight,NORMAL;
-
-		if (RayHitField(newPos, &terrainHeight, &NORMAL))
-		{
-			newPos.y = terrainHeight.y;
-		}
-		else
-		{
-			newPos.y = g_Enemies[i].pos.y;
-		}
-
-		bool collisionDetected = false;
-
-		// Diğer düşmanlarla çarpışmayı kontrol et
-		for (int j = 0; j < MAX_ENEMY; j++)
-		{
-			if (i != j && g_Enemies[j].use)
-			{
-				if (CollisionBC(newPos, g_Enemies[j].pos, 5.0f, 5.0f)) // Çarpışma kontrolü
-				{
-					collisionDetected = true;
-					break; // Daha fazla kontrol etmeye gerek yok
-				}
-			}
-		}
-
-		
-	
-
-			// Eğer çarpışma algılandıysa eski pozisyona dön
-			if (collisionDetected)
-			{
-				g_Enemies[i].pos = oldPos;
-			}
-			else
-			{
-				g_Enemies[i].pos = newPos;
-			}
-
-			// Eğer çarpışma algılandıysa eski pozisyona dön
-
-			
-
-			if (currentEnemyCount <= 0)
-			{
-				//SetFade(FADE_OUT, MODE_RESULT);
-			}
-
-			
-
-			// Gölge pozisyonunu güncelle
-			XMFLOAT3 pos = g_Enemies[i].pos;
-			pos.y -= (ENEMY_OFFSET_Y - 0.1f);
-			SetPositionShadow(g_Enemies[i].shadowIdx, pos);
-		}
-	}
-
-
-
-#ifdef _DEBUG
-
-	for (int i = 0; i < MAX_ENEMY; i++)
-	{
-		if (GetKeyboardTrigger(DIK_P))
-		{
-			// モデルの色を変更できるよ！半透明にもできるよ。
-			for (int j = 0; j < g_Enemies[i].model.SubsetNum; j++)
-			{
-				SetModelDiffuse(&g_Enemies[i].model, j, XMFLOAT4(1.0f, 0.0f, 0.0f, 0.5f));
-			}
-		}
-
-		if (GetKeyboardTrigger(DIK_L))
-		{
-			// モデルの色を元に戻している
-			for (int j = 0; j < g_Enemies[i].model.SubsetNum; j++)
-			{
-				SetModelDiffuse(&g_Enemies[i].model, j, g_Enemies[i].diffuse[0]);
-			}
-		}
-	}
-#endif
-
-
+        bool blocked = false;
+        for (const ENEMY& other : enemies)
+        {
+            if (&other == &enemy || !other.use) continue;
+            XMFLOAT3 separation = {other.pos.x, next.y, other.pos.z};
+            if (CollisionBC(next, separation, EnemyBodyRadius, EnemyBodyRadius))
+            {
+                blocked = true;
+                break;
+            }
+        }
+        if (blocked) continue;
+        enemy.pos = next;
+        enemy.walkPhase = fmodf(enemy.walkPhase + 0.2f, XM_2PI);
+    }
 }
 
-void SpawnEnemy()
-{
-	for (int i = 0; i < MAX_ENEMY; i++)
-	{
-		if (!g_Enemies[i].use)
-		{
-			g_Enemies[i].isAlive = TRUE;
-			g_Enemies[i].use = TRUE;
-			g_Enemies[i].health = 100.0f;
-
-			g_Enemies[i].pos = XMFLOAT3(rand() % 700 - 550, 15.0f, rand() % 700 - 550);
-
-			currentEnemyCount++;
-			spawnTimer = 0;
-			break;
-		}
-	}
-}
-
-//=============================================================================
-// 描画処理
-//=============================================================================
 void DrawEnemy(void)
 {
-	XMMATRIX mtxScl, mtxRot, mtxTranslate, mtxWorld;
+    SetCullingMode(CULL_MODE_NONE);
+    for (const ENEMY& enemy : enemies)
+    {
+        if (!enemy.use) continue;
+        const float walk = sinf(enemy.walkPhase);
+        float strike = 0.0f;
+        if (enemy.attackFrame > 0)
+        {
+            const float frame = static_cast<float>(enemy.attackFrame);
+            if (frame < 12.0f)
+                strike = -0.55f * frame / 12.0f;
+            else if (frame <= AttackImpact)
+                strike = -0.55f + 1.55f * (frame - 12.0f) / (AttackImpact - 12.0f);
+            else
+                strike = (AttackDuration - frame) / (AttackDuration - AttackImpact);
+        }
 
-	// カリング無効
-	SetCullingMode(CULL_MODE_NONE);
-
-	for (int i = 0; i < MAX_ENEMY; i++)
-	{
-		if (g_Enemies[i].use == FALSE) continue;
-
-		// ワールドマトリックスの初期化
-		mtxWorld = XMMatrixIdentity();
-
-		// スケールを反映
-		mtxScl = XMMatrixScaling(g_Enemies[i].scl.x, g_Enemies[i].scl.y, g_Enemies[i].scl.z);
-		mtxWorld = XMMatrixMultiply(mtxWorld, mtxScl);
-
-		// 回転を反映
-		mtxRot = XMMatrixRotationRollPitchYaw(g_Enemies[i].rot.x, g_Enemies[i].rot.y + XM_PI, g_Enemies[i].rot.z);
-		mtxWorld = XMMatrixMultiply(mtxWorld, mtxRot);
-
-		// 移動を反映
-		mtxTranslate = XMMatrixTranslation(g_Enemies[i].pos.x, g_Enemies[i].pos.y, g_Enemies[i].pos.z);
-		mtxWorld = XMMatrixMultiply(mtxWorld, mtxTranslate);
-
-		// ワールドマトリックスの設定
-		SetWorldMatrix(&mtxWorld);
-
-		XMStoreFloat4x4(&g_Enemies[i].mtxWorld, mtxWorld);
-
-		
-
-		// モデル描画
-		DrawModel(&g_Enemies[i].model);
-	}
-
-	// カリング設定を戻す
-	SetCullingMode(CULL_MODE_BACK);
+        const XMMATRIX root = XMMatrixScaling(0.5f, 0.5f, 0.5f) *
+            XMMatrixRotationY(enemy.rot.y) *
+            XMMatrixTranslation(enemy.pos.x, enemy.pos.y, enemy.pos.z);
+        for (const BearPart& part : parts)
+        {
+            const float pitch = enemy.attackFrame > 0 ? strike * part.attackSwing : walk * part.walkSwing;
+            const XMFLOAT3& p = part.pivot;
+            XMMATRIX world = XMMatrixTranslation(-p.x, -p.y, -p.z) * XMMatrixRotationX(pitch) *
+                XMMatrixTranslation(p.x, p.y, p.z) * root;
+            SetWorldMatrix(&world);
+            DrawModelSubsets(&bearModel, part.firstSubset, part.subsetCount);
+        }
+    }
+    SetCullingMode(CULL_MODE_BACK);
 }
 
-
-ENEMY* FindNearestEnemy(XMFLOAT3 swordPos)
+const ENEMY* GetEnemy(void)
 {
-	
-
-	ENEMY* closestEnemy = nullptr;
-	float minDistance = 1000.0f;
-
-	for (int i = 0; i < MAX_ENEMY; i++)
-	{
-		if (!g_Enemies[i].isAlive) continue; // Ölü düşmanları atla
-
-		XMVECTOR enemyPos = XMLoadFloat3(&g_Enemies[i].pos);
-		XMVECTOR swordPosition = XMLoadFloat3(&swordPos);
-
-		float distance = XMVectorGetX(XMVector3Length(XMVectorSubtract(enemyPos, swordPosition)));
-
-		if (distance < minDistance) // En küçük mesafeyi bul
-		{
-			minDistance = distance;
-			closestEnemy = &g_Enemies[i];
-		}
-	}
-
-#ifdef _DEBUG
-
-	PrintDebugProc("Kilic pozisyonu: (%f, %f, %f)\n", swordPos.x, swordPos.y, swordPos.z);
-	if (closestEnemy) {
-		PrintDebugProc("En yakin dusman bulundu: (%f, %f, %f)\n", closestEnemy->pos.x, closestEnemy->pos.y, closestEnemy->pos.z);
-	}
-	else {
-		PrintDebugProc("Hata: En yakin dusman bulunamadi!\n");
-	}
-#endif // _DEBUG
-
-	return closestEnemy;
-
+    return enemies;
 }
 
-
-
-
-
-//=============================================================================
-// エネミーの取得
-//=============================================================================
-ENEMY *GetEnemy(void)
+ENEMY* FindNearestEnemy(XMFLOAT3 position)
 {
-	for (int i = 0; i < MAX_ENEMY; i++)
-	{
-		if (g_Enemies[i].isAlive) 
-		{
-			return &g_Enemies[i];
-		}
-	}
-	return nullptr;
+    ENEMY* closest = nullptr;
+    float bestDistance = 0.0f;
+    for (ENEMY& enemy : enemies)
+    {
+        if (!enemy.use) continue;
+        const float distance = XMVectorGetX(XMVector3LengthSq(XMLoadFloat3(&position) - XMLoadFloat3(&enemy.pos)));
+        if (closest && distance >= bestDistance) continue;
+        bestDistance = distance;
+        closest = &enemy;
+    }
+    return closest;
 }
 
+void DamageEnemiesInRange(XMFLOAT3 center, float radius, float damage)
+{
+    for (ENEMY& enemy : enemies)
+        if (enemy.use && CollisionBC(center, enemy.pos, radius, EnemyBodyRadius))
+            DamageEnemy(enemy, damage);
+}
 
+int GetEnemyWave(void) { return wave; }
+int GetAliveEnemyCount(void) { return alive; }
+int GetWaveRestFrames(void) { return restFrames; }
+bool IsEnemyAttackActive(const ENEMY& enemy) { return enemy.attackFrame == AttackImpact; }

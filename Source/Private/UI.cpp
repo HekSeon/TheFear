@@ -50,12 +50,7 @@ HRESULT InitUI(void)
 	for (int i = 0; i < TEXTURE_MAX; i++)
 	{
 		g_Texture[i] = NULL;
-		D3DX11CreateShaderResourceViewFromFile(GetDevice(),
-			g_TexturName[i],
-			NULL,
-			NULL,
-			&g_Texture[i],
-			NULL);
+		LoadGameTexture(g_TexturName[i], &g_Texture[i]);
 	}
 
 	// 頂点バッファ生成

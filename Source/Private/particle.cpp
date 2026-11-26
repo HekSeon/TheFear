@@ -85,12 +85,7 @@ HRESULT InitParticle(void)
     for (int i = 0; i < TEXTURE_MAX; i++)
     {
         g_Texture[i] = NULL;
-        D3DX11CreateShaderResourceViewFromFile(GetDevice(),
-            g_TextureName[i],
-            NULL,
-            NULL,
-            &g_Texture[i],
-            NULL);
+        LoadGameTexture(g_TextureName[i], &g_Texture[i]);
     }
 
     g_TexNo = 0;

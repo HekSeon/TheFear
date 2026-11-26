@@ -6,6 +6,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 #define _CRT_SECURE_NO_WARNINGS
 #include "main.h"
+#include <algorithm>
 #include "model.h"
 #include "camera.h"
 
@@ -122,12 +123,7 @@ void LoadModel(char* FileName, DX11_MODEL* Model)
             Model->SubsetArray[i].Material.Material = model.SubsetArray[i].Material.Material;
 
             Model->SubsetArray[i].Material.Texture = NULL;
-            D3DX11CreateShaderResourceViewFromFile(GetDevice(),
-                model.SubsetArray[i].Material.TextureName,
-                NULL,
-                NULL,
-                &Model->SubsetArray[i].Material.Texture,
-                NULL);
+            LoadGameTexture(model.SubsetArray[i].Material.TextureName, &Model->SubsetArray[i].Material.Texture);
         }
     }
 
@@ -162,6 +158,14 @@ void UnloadModel(DX11_MODEL* Model)
 //=============================================================================
 void DrawModel(DX11_MODEL* Model)
 {
+    DrawModelSubsets(Model, 0, Model->SubsetNum);
+}
+
+void DrawModelSubsets(DX11_MODEL* Model, unsigned first, unsigned count)
+{
+    const unsigned end = std::min(first + count, static_cast<unsigned>(Model->SubsetNum));
+    if (first >= end) return;
+
     // 頂点バッファ設定
     UINT stride = sizeof(VERTEX_3D);
     UINT offset = 0;
@@ -173,7 +177,7 @@ void DrawModel(DX11_MODEL* Model)
     // プリミティブトポロジー設定
     GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-    for (unsigned short i = 0; i < Model->SubsetNum; i++)
+    for (unsigned i = first; i < end; ++i)
     {
         // マテリアル設定
         SetMaterial(Model->SubsetArray[i].Material.Material);

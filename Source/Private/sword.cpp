@@ -1,310 +1,170 @@
-﻿//=============================================================================
-//
-// ソード処理 [sword.cpp]
-// Author : BAYAR "HekSeon" SEMIH
-//
-//=============================================================================
-#include "main.h"
-#include "input.h"
-#include "camera.h"
-#include "debugproc.h"
-#include "sword.h"
-#include "shadow.h"
-#include "light.h"
-#include "player.h"
+﻿#include "sword.h"
+
+#include <algorithm>
 #include "collision.h"
+#include "debugproc.h"
 #include "enemy.h"
+#include "input.h"
+#include "meshfield.h"
+#include "player.h"
 
-//*****************************************************************************
-// マクロ定義
-//*****************************************************************************
-//#define	MODEL_PLAYER		"data/MODEL/player.obj"			// 読み込むモデル名
+namespace
+{
+constexpr float FlightSpeed = 6.0f;
+constexpr float ImpactDamage = 50.0f;
+constexpr float ScatterSpeed = 0.035f;
+constexpr float AssembleSpeed = 0.04f;
+constexpr float BackScale = 0.055f;
+constexpr float FlightScale = 0.1f;
+constexpr float BladeTipLocalZ = -303.4f;
+constexpr float HoverStep = XM_2PI / 150.0f;
 
-#define	MODEL_SWORD		"data/MODEL/sword.obj"	// 読み込むモデル名
+enum class SwordState { Following, Flying, Scattering, Assembling };
 
-#define MAX_MODEL_SWORD		(1)								// プレイヤーの数
+SWORD sword = {};
+SwordState state = SwordState::Following;
+ENEMY* targetEnemy = nullptr;
+float hoverPhase = 0.0f;
 
-#define SWORD_MIN_Y (-0.855346f)
-#define SWORD_MAX_Y (0.855346f)
+void FollowPlayer()
+{
+    const PLAYER& player = *GetPlayer();
+    const float yaw = player.rot.y + XM_PI;
+    const XMVECTOR offset = XMVector3TransformNormal(
+        XMVectorSet(3.0f, 6.0f, -8.0f + 0.6f * cosf(hoverPhase), 0.0f),
+        XMMatrixRotationY(yaw));
+    XMStoreFloat3(&sword.pos, XMLoadFloat3(&player.pos) + offset);
 
-PLAYER* player = GetPlayer();
-enum SwordState {
-	FOLLOW_PLAYER,
-	ATTACK_ENEMY,
-	DISSOLVING_OUT,
-	DISSOLVING_IN
-};
+    // sword.obj points along local -Z. Keep its tip above any uphill ground behind the player.
+    sword.rot = {-XM_PIDIV2, yaw, 0.0f};
+    sword.scl = {BackScale, BackScale, BackScale};
+    XMFLOAT3 ground, normal;
+    if (RayHitField(sword.pos, &ground, &normal))
+        sword.pos.y = std::max(sword.pos.y, ground.y - BladeTipLocalZ * BackScale + 2.0f);
+    sword.pos.y += 1.25f * sinf(hoverPhase);
+}
 
-SwordState g_SwordState = FOLLOW_PLAYER;
-XMFLOAT3 g_TargetPos;           // Kılıcın gitmesi gereken hedef pozisyonu
-float g_SwordSpeed = 1.2f;      // Kılıcın hareket hızı
-static ENEMY* g_TargetEnemy = NULL; // <-- YENİ: Takip edilen hedef düşman pointer'ı
+void BeginAssembly()
+{
+    targetEnemy = nullptr;
+    FollowPlayer();
+    StartDissolveIn(&sword.dissolve, AssembleSpeed, 0.0f, 1.0f);
+    state = SwordState::Assembling;
+}
+}
 
-
-//*****************************************************************************
-// プロトタイプ宣言
-//*****************************************************************************
-
-
-
-//*****************************************************************************
-// グローバル変数
-//*****************************************************************************
-static SWORD	g_Sword;						// プレイヤー
-
-static BOOL g_Load = FALSE;
-
-static float speed = 1.0f;
-
-// プレイヤーの階層アニメーションデータ
-// プレイヤーの左右パーツを動かしているアニメデータ
-
-
-
-//=============================================================================
-// 初期化処理
-//=============================================================================
 HRESULT InitSword(void)
 {
-	LoadModel(MODEL_SWORD, &g_Sword.model);
-	g_Sword.load = TRUE;
-
-	PLAYER* player = GetPlayer();
-
-
-
-	g_Sword.pos = XMFLOAT3(0.0f, 0.0f, 0.0f);
-	g_Sword.rot = XMFLOAT3(0.0f, 0.0f, 0.0f);
-	g_Sword.scl = XMFLOAT3(0.1f, 0.1f, 0.1f);
-
-	g_Sword.size = SWORD_SIZE;	// 当たり判定の大きさ
-
-	g_Sword.use = TRUE;
-
-	// ここでプレイヤー用の影を作成している
-	XMFLOAT3 pos = g_Sword.pos;
-	pos.y -= (0.0f - 0.1f);
-	g_Sword.shadowIdx = CreateShadow(pos, 1.0f, 1.0f);
-	//          ↑
-	//        このメンバー変数が生成した影のIndex番号
-
-	g_Sword.dissolve.threshold = 0.0f;
-	g_Sword.dissolve.minY = SWORD_MIN_Y;
-	g_Sword.dissolve.maxY = SWORD_MAX_Y;
-	g_Sword.dissolve.speed = 0.0f;
-
-
-		// 位置・回転・スケールの初期設定
-		g_Sword.pos = XMFLOAT3(0.0f, 0.0f, 0.0f);
-		g_Sword.rot = XMFLOAT3(180.0f, 0.0f, 0.0f);
-		g_Sword.scl = XMFLOAT3(0.1f, 0.1f, 0.1f);
-
-	
-
-			// 階層アニメーション用のメンバー変数の初期化
-		g_Sword.time = 0.0f;			// 線形補間用のタイマーをクリア
-		g_Sword.tblNo = 0;			// 再生する行動データテーブルNoをセット
-		g_Sword.tblMax = 0;			// 再生する行動データテーブルのレコード数をセット
-
-		// パーツの読み込みはまだしていない
-		g_Sword.load = 0;
-
-
-	return S_OK;
+    LoadModel("data/MODEL/sword.obj", &sword.model);
+    sword.load = TRUE;
+    sword.use = TRUE;
+    sword.size = SWORD_SIZE;
+    sword.dissolve = {};
+    state = SwordState::Following;
+    targetEnemy = nullptr;
+    hoverPhase = 0.0f;
+    FollowPlayer();
+    return S_OK;
 }
 
-//=============================================================================
-// 終了処理
-//=============================================================================
 void UninitSword(void)
 {
-	// モデルの解放処理
-	if (g_Sword.load)
-	{
-		UnloadModel(&g_Sword.model);
-		g_Sword.load = FALSE;
-	}
-
-
-	// パーツの解放処理
-	for (int i = 0; i < MAX_MODEL_SWORD; i++)
-	{
-		if (g_Sword.load == TRUE)
-		{
-			// パーツの解放処理
-			UnloadModel(&g_Sword.model);
-			g_Sword.load = FALSE;
-		}
-	}
-
+    if (sword.load)
+        UnloadModel(&sword.model);
+    sword = {};
+    targetEnemy = nullptr;
+    state = SwordState::Following;
 }
 
-//=============================================================================
-// 更新処理
-//=============================================================================
 void UpdateSword(void)
 {
-#ifdef _DEBUG
-	if (GetKeyboardPress(DIK_R))
-	{
-		g_Sword.pos.z = g_Sword.pos.x = 0.0f;
-		g_Sword.rot.y = g_Sword.dir = 0.0f;
-	}
-#endif
+    hoverPhase = fmodf(hoverPhase + HoverStep, XM_2PI);
+    switch (state)
+    {
+    case SwordState::Following:
+        FollowPlayer();
+        if (!IsGameDebugOpen() && GetKeyboardTrigger(DIK_SPACE))
+            AttackNearestEnemy();
+        break;
 
-	bUpdateDdissolve(&g_Sword.dissolve, 1.0f);
+    case SwordState::Flying:
+    {
+        if (!targetEnemy || !targetEnemy->use)
+            targetEnemy = FindNearestEnemy(sword.pos);
+        if (!targetEnemy)
+        {
+            BeginAssembly();
+            break;
+        }
 
-	if (g_SwordState == FOLLOW_PLAYER)
-	{
-		
-		// sword palyer near
-		XMFLOAT3 followOffset = { 50.0f, 30.0f, -40.0f };
-		XMMATRIX playerMatrix = XMLoadFloat4x4(&player->mtxWorld);
-		XMVECTOR offsetVector = XMVectorSet(followOffset.x, followOffset.y, followOffset.z, 1.0f);
-		offsetVector = XMVector3TransformCoord(offsetVector, playerMatrix);
-		XMStoreFloat3(&g_Sword.pos, offsetVector);
-		// sword rotation set
-		XMFLOAT3 swordRot;
-		XMStoreFloat3(&swordRot, XMLoadFloat3(&player->rot));
-		swordRot.y += XM_PI;
+        const float scale = std::min(sword.scl.x + 0.006f, FlightScale);
+        sword.scl = {scale, scale, scale};
 
-		XMStoreFloat3(&g_Sword.rot, XMLoadFloat3(&swordRot));
-	}
+        const XMFLOAT3 target = targetEnemy->pos;
+        const XMVECTOR position = XMLoadFloat3(&sword.pos);
+        const XMVECTOR delta = XMLoadFloat3(&target) - position;
+        const float distance = XMVectorGetX(XMVector3Length(delta));
+        if (distance > 0.001f)
+        {
+            const float dx = target.x - sword.pos.x;
+            const float dy = target.y - sword.pos.y;
+            const float dz = target.z - sword.pos.z;
+            sword.rot = {atan2f(dy, sqrtf(dx * dx + dz * dz)), atan2f(dx, dz) + XM_PI, 0.0f};
 
-	else if (g_SwordState == ATTACK_ENEMY)
-	{
-		// --- YENİ: Düşman hareket halindeyse hedef pozisyonunu her kare güncelle ---
-		if (g_TargetEnemy != NULL && g_TargetEnemy->use && g_TargetEnemy->isAlive)
-		{
-			g_TargetPos = g_TargetEnemy->pos;
-		}
-		else
-		{
-			// Eğer hedef düşman ortadan kaybolduysa veya öldüyse, en yakın başka bir düşmana yönel veya player'a dön
-			g_TargetEnemy = FindNearestEnemy(g_Sword.pos);
-			if (g_TargetEnemy)
-			{
-				g_TargetPos = g_TargetEnemy->pos;
-			}
-			else
-			{
-				g_SwordState = FOLLOW_PLAYER;
-				return;
-			}
-		}
-		// ------------------------------------------------------------------------
+            // Stop at the first contact along this frame's flight step.
+            const float contact = distance - sword.size - EnemyBodyRadius;
+            const float step = std::clamp(contact + 0.01f, 0.0f, FlightSpeed);
+            XMStoreFloat3(&sword.pos, position + delta * (step / distance));
+        }
+        if (CollisionBC(sword.pos, target, sword.size, EnemyBodyRadius))
+        {
+            DamageEnemy(*targetEnemy, ImpactDamage);
+            targetEnemy = nullptr;
+            StartDissolveOut(&sword.dissolve, ScatterSpeed, 0.0f, 1.0f);
+            state = SwordState::Scattering;
+        }
+        break;
+    }
 
-		XMVECTOR swordPos = XMLoadFloat4x4(&g_Sword.mtxWorld).r[3]; // Veya g_Sword.pos
-		// Yukarıdaki satırı kendi pozisyon okuma şeklinize göre koruyabilirsiniz:
-		// XMVECTOR swordPos = XMLoadFloat3(&g_Sword.pos);
+    case SwordState::Scattering:
+        if (bUpdateDdissolve(&sword.dissolve, 1.0f))
+            BeginAssembly();
+        break;
 
-		XMVECTOR targetPos = XMLoadFloat4x4(&g_TargetEnemy->mtxWorld).r[3]; // Veya g_TargetPos doğrudan
-		// Biz g_TargetPos'u güncellediğimiz için doğrudan kullanabiliriz:
-		targetPos = XMLoadFloat3(&g_TargetPos);
-		XMVECTOR currentPos = XMLoadFloat3(&g_Sword.pos);
-
-		XMVECTOR direction = XMVectorSubtract(targetPos, currentPos);
-
-		// Eğer hedefe çok yaklaştıysa çarpışma / hasar verme mantığı
-		if (XMVectorGetX(XMVector3Length(direction)) < 5.0f) // Mesafe eşiğini biraz esnetebilirsiniz
-		{
-			if (g_TargetEnemy)
-			{
-				g_TargetEnemy->health -= 50;
-				if (g_TargetEnemy->health <= 0)
-				{
-					g_TargetEnemy->isAlive = FALSE;
-					g_TargetEnemy->use = FALSE;
-				}
-			}
-			StartDissolveOut(&g_Sword.dissolve, 0.05f, SWORD_MIN_Y, SWORD_MAX_Y);
-			g_SwordState = DISSOLVING_OUT;
-			g_TargetEnemy = NULL; 
-		}
-		else
-		{
-			direction = XMVector3Normalize(direction);
-			currentPos = XMVectorAdd(currentPos, XMVectorScale(direction, g_SwordSpeed));
-			XMStoreFloat3(&g_Sword.pos, currentPos);
-		}
-	}
-
-
-	if (GetKeyboardTrigger(DIK_SPACE))
-	{
-		AttackNearestEnemy();
-	}
-
-	if (GetKeyboardTrigger(DIK_F))
-	{
-		if (g_SwordState == ATTACK_ENEMY)
-		{
-			g_SwordState = FOLLOW_PLAYER;
-		}
-		else
-		{
-			g_SwordState = FOLLOW_PLAYER;
-
-		}
-	}
-
-#ifdef _DEBUG
-	PrintDebugProc("SwordState: %d \n", g_SwordState);
-#endif // _DEBUG
-
+    case SwordState::Assembling:
+        FollowPlayer();
+        if (bUpdateDdissolve(&sword.dissolve, 1.0f))
+            state = SwordState::Following;
+        break;
+    }
 }
 
-	// Kılıcı en yakın düşmana yönlendir
 void AttackNearestEnemy()
 {
-	if (g_SwordState != FOLLOW_PLAYER) return;
-
-	ENEMY* nearestEnemy = FindNearestEnemy(g_Sword.pos);
-	if (!nearestEnemy) return;
-
-	g_SwordState = ATTACK_ENEMY;
-	g_TargetPos = nearestEnemy->pos;
-	
+    if (state != SwordState::Following || !GetPlayer()->use) return;
+    targetEnemy = FindNearestEnemy(GetPlayer()->pos);
+    if (targetEnemy)
+        state = SwordState::Flying;
 }
 
-
-//=============================================================================
-// 描画処理
-//=============================================================================
 void DrawSword(void)
 {
-	if (g_Sword.use == FALSE) return;
+    if (!sword.use) return;
 
-	BOOL dissolveActive = (g_Sword.dissolve.mode != DISSOLVE_NONE);
-	SetDissolve(g_Sword.dissolve.threshold, g_Sword.dissolve.minY, g_Sword.dissolve.maxY, dissolveActive);
-
-	SetCullingMode(CULL_MODE_NONE);
-
-	XMMATRIX mtxScl, mtxRot, mtxTranslate, mtxPlayer;
-
-	mtxPlayer = XMMatrixIdentity();
-	mtxScl = XMMatrixScaling(g_Sword.scl.x, g_Sword.scl.y, g_Sword.scl.z);
-	mtxRot = XMMatrixRotationRollPitchYaw(g_Sword.rot.x, g_Sword.rot.y, g_Sword.rot.z);
-	mtxTranslate = XMMatrixTranslation(g_Sword.pos.x, g_Sword.pos.y, g_Sword.pos.z);
-
-	mtxPlayer = XMMatrixMultiply(mtxScl, mtxRot);
-	mtxPlayer = XMMatrixMultiply(mtxPlayer, mtxTranslate);
-
-	SetWorldMatrix(&mtxPlayer);
-	XMStoreFloat4x4(&g_Sword.mtxWorld, mtxPlayer);
-	DrawModel(&g_Sword.model);
-
-	SetDissolve(0.0f, 0.0f, 0.0f, FALSE);
+    XMMATRIX world = XMMatrixScaling(sword.scl.x, sword.scl.y, sword.scl.z) *
+        XMMatrixRotationRollPitchYaw(sword.rot.x, sword.rot.y, sword.rot.z) *
+        XMMatrixTranslation(sword.pos.x, sword.pos.y, sword.pos.z);
+    SetWorldMatrix(&world);
+    XMStoreFloat4x4(&sword.mtxWorld, world);
+    SetCullingMode(CULL_MODE_NONE);
+    const bool fragments = sword.dissolve.mode != DISSOLVE_NONE;
+    if (fragments) SetSwordFragments(true, sword.dissolve.threshold);
+    DrawModel(&sword.model);
+    if (fragments) SetSwordFragments(false, 0.0f);
+    SetCullingMode(CULL_MODE_BACK);
 }
 
-
-
-
-//=============================================================================
-// プレイヤー情報を取得
-//=============================================================================
 SWORD* GetSword(void)
 {
-	return &g_Sword;
+    return &sword;
 }
-

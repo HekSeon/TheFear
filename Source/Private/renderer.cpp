@@ -6,6 +6,9 @@
 //=============================================================================
 #include "main.h"
 #include "renderer.h"
+#include <wincodec.h>
+#include <wrl/client.h>
+#include <vector>
 
 // デバッグ用画面テキスト出力を有効にする
 #define DEBUG_DISP_TEXTOUT
@@ -94,8 +97,12 @@ static ID3D11DepthStencilView* g_DepthStencilView = NULL;
 
 
 
+static IWICImagingFactory* g_ImagingFactory = nullptr;
+static bool g_RendererComInitialized = false;
+
 static ID3D11VertexShader* g_VertexShader = NULL;
 static ID3D11PixelShader* g_PixelShader = NULL;
+static ID3D11GeometryShader* g_SwordFragmentShader = nullptr;
 static ID3D11InputLayout* g_VertexLayout = NULL;
 static ID3D11Buffer* g_WorldBuffer = NULL;
 static ID3D11Buffer* g_ViewBuffer = NULL;
@@ -366,6 +373,13 @@ void SetFuchi(int flag)
     GetDeviceContext()->UpdateSubresource(g_FuchiBuffer, 0, NULL, &g_Fuchi, 0, 0);
 }
 
+void SetSwordFragments(bool enabled, float progress)
+{
+    if (enabled)
+        SetDissolve(progress, 0.0f, 1.0f, false);
+    GetDeviceContext()->GSSetShader(enabled ? g_SwordFragmentShader : nullptr, nullptr, 0);
+}
+
 void SetDissolve(float threshold, float minY, float maxY, bool dissolveEnable)
 {
     g_Dissolve.Threshold = threshold;
@@ -388,6 +402,84 @@ void SetShaderCamera(XMFLOAT3 pos)
 //=============================================================================
 // init renderer
 //=============================================================================
+HRESULT LoadGameTexture(const char* path, ID3D11ShaderResourceView** texture)
+{
+    if (!texture) return E_POINTER;
+    *texture = nullptr;
+    if (!g_ImagingFactory || !path || !*path) return E_INVALIDARG;
+
+    wchar_t filename[MAX_PATH];
+    if (!MultiByteToWideChar(CP_ACP, 0, path, -1, filename, _countof(filename)))
+        return HRESULT_FROM_WIN32(GetLastError());
+
+    using Microsoft::WRL::ComPtr;
+    ComPtr<IWICBitmapDecoder> decoder;
+    HRESULT hr = g_ImagingFactory->CreateDecoderFromFilename(filename, nullptr, GENERIC_READ,
+        WICDecodeMetadataCacheOnLoad, &decoder);
+    if (FAILED(hr)) return hr;
+
+    ComPtr<IWICBitmapFrameDecode> frame;
+    hr = decoder->GetFrame(0, &frame);
+    if (FAILED(hr)) return hr;
+    UINT width = 0, height = 0;
+    hr = frame->GetSize(&width, &height);
+    if (FAILED(hr)) return hr;
+    if (!width || !height || width > D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION ||
+        height > D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION) return E_INVALIDARG;
+
+    ComPtr<IWICFormatConverter> rgba;
+    hr = g_ImagingFactory->CreateFormatConverter(&rgba);
+    if (FAILED(hr)) return hr;
+    hr = rgba->Initialize(frame.Get(), GUID_WICPixelFormat32bppRGBA,
+        WICBitmapDitherTypeNone, nullptr, 0.0, WICBitmapPaletteTypeCustom);
+    if (FAILED(hr)) return hr;
+
+    const UINT pitch = width * 4;
+    const UINT size = pitch * height;
+    std::vector<BYTE> pixels(size);
+    hr = rgba->CopyPixels(nullptr, pitch, size, pixels.data());
+    if (FAILED(hr)) return hr;
+
+    D3D11_TEXTURE2D_DESC desc{};
+    desc.Width = width;
+    desc.Height = height;
+    desc.ArraySize = 1;
+    desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    desc.SampleDesc.Count = 1;
+    desc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
+    desc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
+    ComPtr<ID3D11Texture2D> image;
+    hr = g_D3DDevice->CreateTexture2D(&desc, nullptr, &image);
+    if (FAILED(hr)) return hr;
+    hr = g_D3DDevice->CreateShaderResourceView(image.Get(), nullptr, texture);
+    if (FAILED(hr)) return hr;
+    g_ImmediateContext->UpdateSubresource(image.Get(), 0, nullptr, pixels.data(), pitch, 0);
+    g_ImmediateContext->GenerateMips(*texture);
+    return S_OK;
+}
+
+HRESULT CompileGameShader(const char* entry, const char* profile,
+                                 UINT flags, ID3DBlob** shader)
+{
+    Microsoft::WRL::ComPtr<ID3DBlob> errors;
+    const HRESULT hr = D3DCompileFromFile(L"shader.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE,
+        entry, profile, flags, 0, shader, &errors);
+    if (FAILED(hr))
+    {
+        const char* message = errors ? static_cast<const char*>(errors->GetBufferPointer()) :
+            "Could not open shader.hlsl. Keep it next to TheFear.exe.";
+        MessageBoxA(nullptr, message, entry, MB_OK | MB_ICONERROR);
+    }
+    return hr;
+}
+
+void SetSceneShaders(void)
+{
+    g_ImmediateContext->IASetInputLayout(g_VertexLayout);
+    g_ImmediateContext->VSSetShader(g_VertexShader, nullptr, 0);
+    g_ImmediateContext->PSSetShader(g_PixelShader, nullptr, 0);
+}
+
 HRESULT InitRenderer(HINSTANCE hInstance, HWND hWnd, BOOL bWindow)
 {
     HRESULT hr = S_OK;
@@ -399,7 +491,9 @@ HRESULT InitRenderer(HINSTANCE hInstance, HWND hWnd, BOOL bWindow)
     sd.BufferCount = 1;
     sd.BufferDesc.Width = SCREEN_WIDTH;
     sd.BufferDesc.Height = SCREEN_HEIGHT;
-    sd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    sd.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+    sd.Flags = DXGI_SWAP_CHAIN_FLAG_GDI_COMPATIBLE;
+    deviceFlags |= D3D11_CREATE_DEVICE_BGRA_SUPPORT;
     sd.BufferDesc.RefreshRate.Numerator = 60;
     sd.BufferDesc.RefreshRate.Denominator = 1;
     sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
@@ -410,32 +504,33 @@ HRESULT InitRenderer(HINSTANCE hInstance, HWND hWnd, BOOL bWindow)
 
     // デバッグ文字出力用設定
 #if defined(_DEBUG) && defined(DEBUG_DISP_TEXTOUT)
-    sd.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
-    sd.Flags = DXGI_SWAP_CHAIN_FLAG_GDI_COMPATIBLE;
-    deviceFlags = D3D11_CREATE_DEVICE_DEBUG | D3D11_CREATE_DEVICE_BGRA_SUPPORT;
+    deviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
 #endif
 
-    hr = D3D11CreateDeviceAndSwapChain(NULL,
-        D3D_DRIVER_TYPE_HARDWARE,
-        NULL,
-        deviceFlags,
-        NULL,
-        0,
-        D3D11_SDK_VERSION,
-        &sd,
-        &g_SwapChain,
-        &g_D3DDevice,
-        &g_FeatureLevel,
-        &g_ImmediateContext);
+    const D3D_FEATURE_LEVEL featureLevels[] = {
+        D3D_FEATURE_LEVEL_11_0, D3D_FEATURE_LEVEL_10_1, D3D_FEATURE_LEVEL_10_0
+    };
+    const auto createDevice = [&](D3D_DRIVER_TYPE driver, UINT flags)
+    {
+        return D3D11CreateDeviceAndSwapChain(nullptr, driver, nullptr, flags, featureLevels, _countof(featureLevels),
+            D3D11_SDK_VERSION, &sd, &g_SwapChain, &g_D3DDevice, &g_FeatureLevel, &g_ImmediateContext);
+    };
+    hr = createDevice(D3D_DRIVER_TYPE_HARDWARE, deviceFlags);
+    if (hr == DXGI_ERROR_SDK_COMPONENT_MISSING)
+    {
+        deviceFlags &= ~D3D11_CREATE_DEVICE_DEBUG;
+        hr = createDevice(D3D_DRIVER_TYPE_HARDWARE, deviceFlags);
+    }
     if (FAILED(hr))
-        return hr;
+        hr = createDevice(D3D_DRIVER_TYPE_WARP, D3D11_CREATE_DEVICE_BGRA_SUPPORT);
+    if (FAILED(hr)) return hr;
 
-    // デバッグ文字出力用設定
-#if defined(_DEBUG) && defined(DEBUG_DISP_TEXTOUT)
-    hr = g_SwapChain->ResizeBuffers(0, SCREEN_WIDTH, SCREEN_HEIGHT, DXGI_FORMAT_UNKNOWN, DXGI_SWAP_CHAIN_FLAG_GDI_COMPATIBLE); // N.B. the GDI compatible flag
-    if (FAILED(hr))
-        return hr;
-#endif
+    hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
+    if (FAILED(hr) && hr != RPC_E_CHANGED_MODE) return hr;
+    g_RendererComInitialized = SUCCEEDED(hr);
+    hr = CoCreateInstance(CLSID_WICImagingFactory, nullptr, CLSCTX_INPROC_SERVER,
+        IID_PPV_ARGS(&g_ImagingFactory));
+    if (FAILED(hr)) return hr;
 
     // レンダーターゲットビュー生成、設定
     ID3D11Texture2D* pBackBuffer = NULL;
@@ -593,7 +688,6 @@ HRESULT InitRenderer(HINSTANCE hInstance, HWND hWnd, BOOL bWindow)
 
 
     // 頂点シェーダーコンパイル・生成
-    ID3DBlob* pErrorBlob;
     ID3DBlob* pVSBlob = NULL;
     DWORD shFlag = D3DCOMPILE_ENABLE_STRICTNESS;
 
@@ -601,22 +695,8 @@ HRESULT InitRenderer(HINSTANCE hInstance, HWND hWnd, BOOL bWindow)
     shFlag = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
 #endif
 
-    hr = D3DX11CompileFromFile("shader.hlsl", NULL, NULL, "VertexShaderPolygon", "vs_4_0", shFlag, 0, NULL, &pVSBlob, &pErrorBlob, NULL);
-    if (FAILED(hr))
-    {
-        if (pErrorBlob)
-        {
-            MessageBox(NULL, (char*)pErrorBlob->GetBufferPointer(), "VS Shader Error", MB_OK | MB_ICONERROR);
-            pErrorBlob->Release();
-        }
-        else
-        {
-            char msg[256];
-            sprintf_s(msg, "shader.hlsl bulunamadi veya acilamadi. HRESULT: 0x%08X", hr);
-            MessageBox(NULL, msg, "VS Shader Error - Dosya Bulunamadi", MB_OK | MB_ICONERROR);
-        }
-        return E_FAIL;  // pVSBlob null iken CreateVertexShader'a devam etmesin
-    }
+    hr = CompileGameShader("VertexShaderPolygon", "vs_4_0", shFlag, &pVSBlob);
+    if (FAILED(hr)) return hr;
 
     g_D3DDevice->CreateVertexShader(pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), NULL, &g_VertexShader);
 
@@ -641,15 +721,20 @@ HRESULT InitRenderer(HINSTANCE hInstance, HWND hWnd, BOOL bWindow)
 
     // ピクセルシェーダーコンパイル・生成
     ID3DBlob* pPSBlob = NULL;
-    hr = D3DX11CompileFromFile("shader.hlsl", NULL, NULL, "PixelShaderPolygon", "ps_4_0", shFlag, 0, NULL, &pPSBlob, &pErrorBlob, NULL);
-    if (FAILED(hr))
-    {
-        MessageBox(NULL, (char*)pErrorBlob->GetBufferPointer(), "PS", MB_OK | MB_ICONERROR);
-    }
+    hr = CompileGameShader("PixelShaderPolygon", "ps_4_0", shFlag, &pPSBlob);
+    if (FAILED(hr)) return hr;
 
     g_D3DDevice->CreatePixelShader(pPSBlob->GetBufferPointer(), pPSBlob->GetBufferSize(), NULL, &g_PixelShader);
 
     pPSBlob->Release();
+
+    ID3DBlob* fragmentBytecode = nullptr;
+    hr = CompileGameShader("SwordFragmentGeometry", "gs_4_0", shFlag, &fragmentBytecode);
+    if (FAILED(hr)) return hr;
+    hr = g_D3DDevice->CreateGeometryShader(fragmentBytecode->GetBufferPointer(),
+        fragmentBytecode->GetBufferSize(), nullptr, &g_SwordFragmentShader);
+    fragmentBytecode->Release();
+    if (FAILED(hr)) return hr;
 
 
     // 定数バッファ生成
@@ -664,16 +749,19 @@ HRESULT InitRenderer(HINSTANCE hInstance, HWND hWnd, BOOL bWindow)
     // ワールドマトリクス
     g_D3DDevice->CreateBuffer(&hBufferDesc, NULL, &g_WorldBuffer);
     g_ImmediateContext->VSSetConstantBuffers(0, 1, &g_WorldBuffer);
+    g_ImmediateContext->GSSetConstantBuffers(0, 1, &g_WorldBuffer);
     g_ImmediateContext->PSSetConstantBuffers(0, 1, &g_WorldBuffer);
 
     // ビューマトリクス
     g_D3DDevice->CreateBuffer(&hBufferDesc, NULL, &g_ViewBuffer);
     g_ImmediateContext->VSSetConstantBuffers(1, 1, &g_ViewBuffer);
+    g_ImmediateContext->GSSetConstantBuffers(1, 1, &g_ViewBuffer);
     g_ImmediateContext->PSSetConstantBuffers(1, 1, &g_ViewBuffer);
 
     // プロジェクションマトリクス
     g_D3DDevice->CreateBuffer(&hBufferDesc, NULL, &g_ProjectionBuffer);
     g_ImmediateContext->VSSetConstantBuffers(2, 1, &g_ProjectionBuffer);
+    g_ImmediateContext->GSSetConstantBuffers(2, 1, &g_ProjectionBuffer);
     g_ImmediateContext->PSSetConstantBuffers(2, 1, &g_ProjectionBuffer);
 
     // マテリアル情報
@@ -710,6 +798,7 @@ HRESULT InitRenderer(HINSTANCE hInstance, HWND hWnd, BOOL bWindow)
     hBufferDesc.ByteWidth = sizeof(DISSOLVE_CBUFFER);
     g_D3DDevice->CreateBuffer(&hBufferDesc, NULL, &g_DissolveBuffer);
     g_ImmediateContext->VSSetConstantBuffers(8, 1, &g_DissolveBuffer);
+    g_ImmediateContext->GSSetConstantBuffers(8, 1, &g_DissolveBuffer);
     g_ImmediateContext->PSSetConstantBuffers(8, 1, &g_DissolveBuffer);
 
 
@@ -717,8 +806,7 @@ HRESULT InitRenderer(HINSTANCE hInstance, HWND hWnd, BOOL bWindow)
     g_ImmediateContext->IASetInputLayout(g_VertexLayout);
 
     // シェーダー設定
-    g_ImmediateContext->VSSetShader(g_VertexShader, NULL, 0);
-    g_ImmediateContext->PSSetShader(g_PixelShader, NULL, 0);
+    SetSceneShaders();
 
     // ライト初期化
     ZeroMemory(&g_Light, sizeof(LIGHT_CBUFFER));
@@ -745,6 +833,16 @@ HRESULT InitRenderer(HINSTANCE hInstance, HWND hWnd, BOOL bWindow)
 //=============================================================================
 void UninitRenderer(void)
 {
+    if (g_ImagingFactory)
+    {
+        g_ImagingFactory->Release();
+        g_ImagingFactory = nullptr;
+    }
+    if (g_RendererComInitialized)
+    {
+        CoUninitialize();
+        g_RendererComInitialized = false;
+    }
     // オブジェクト解放
     if (g_DepthStateEnable)        g_DepthStateEnable->Release();
     if (g_DepthStateDisable)    g_DepthStateDisable->Release();
@@ -767,6 +865,7 @@ void UninitRenderer(void)
     if (g_VertexLayout)            g_VertexLayout->Release();
     if (g_VertexShader)            g_VertexShader->Release();
     if (g_PixelShader)            g_PixelShader->Release();
+    if (g_SwordFragmentShader)    g_SwordFragmentShader->Release();
 
     if (g_ImmediateContext)        g_ImmediateContext->ClearState();
     if (g_RenderTargetView)        g_RenderTargetView->Release();
@@ -809,6 +908,23 @@ void Present(void)
 //=============================================================================
 // デバッグ用テキスト出力
 //=============================================================================
+void DrawBackBufferOverlay(void (*draw)(HDC))
+{
+    IDXGISurface1* surface = nullptr;
+    if (FAILED(g_SwapChain->GetBuffer(0, __uuidof(IDXGISurface1),
+            reinterpret_cast<void**>(&surface))))
+        return;
+
+    HDC dc = nullptr;
+    if (SUCCEEDED(surface->GetDC(FALSE, &dc)))
+    {
+        draw(dc);
+        surface->ReleaseDC(nullptr);
+        g_ImmediateContext->OMSetRenderTargets(1, &g_RenderTargetView, g_DepthStencilView);
+    }
+    surface->Release();
+}
+
 void DebugTextOut(char* text, int x, int y)
 {
 #if defined(_DEBUG) && defined(DEBUG_DISP_TEXTOUT)

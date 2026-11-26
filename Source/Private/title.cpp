@@ -1,206 +1,225 @@
-﻿//=============================================================================
-//
-// タイトル処理 [tittle.cpp]
-// Author : BAYAR "HekSeon" SEMIH
-//
-//=============================================================================
+﻿#include "title.h"
 
-#include "main.h"
-#include "renderer.h"
-#include "input.h"
 #include "fade.h"
-#include "sound.h"
+#include "input.h"
+#include "renderer.h"
 #include "sprite.h"
-#include "title.h"
+#include "sound.h"
 
-//*****************************************************************************
-// マクロ定義
-//*****************************************************************************
-#define TEXTURE_WIDTH         (SCREEN_WIDTH)    // 背景サイズ：幅
-#define TEXTURE_HEIGHT        (SCREEN_HEIGHT)   // 背景サイズ：高さ
-#define TEXTURE_MAX           (6)               // テクスチャの最大数
+namespace
+{
+ID3D11Buffer* vertices = nullptr;
+ID3D11ShaderResourceView* background = nullptr;
+int selected = 0;
+bool settingsOpen = false;
 
-//*****************************************************************************
-// グローバル変数
-//*****************************************************************************
-static ID3D11Buffer* g_VertexBuffer = NULL;                // 頂点バッファ
-static ID3D11ShaderResourceView* g_Texture[TEXTURE_MAX] = { NULL };    // テクスチャリソース
+constexpr RECT Buttons[] = {{76, 544, 634, 645}, {76, 664, 634, 765}, {76, 784, 634, 885}};
+constexpr RECT VolumeBar = {148, 682, 562, 706};
+constexpr RECT VolumeHit = {148, 655, 563, 730};
+constexpr RECT LowerButton = {76, 655, 132, 730};
+constexpr RECT RaiseButton = {578, 655, 634, 730};
+constexpr RECT BackButton = {76, 784, 634, 885};
+constexpr COLORREF Ivory = RGB(247, 235, 204);
 
-// テクスチャファイルパス一覧
-static char* g_TexturName[TEXTURE_MAX] = {
-    "data/TEXTURE/bg1.jpg",        // 0: 背景1 (通常)
-    "data/TEXTURE/bg.jpg",        // 1: 背景2 (雷エフェクト等)
-    "data/TEXTURE/titlelogo.png",  // 2: タイトルロゴ
-    "data/TEXTURE/start.png",      // 3: スタートボタン
-    "data/TEXTURE/quit.png",       // 4: 終了ボタン
-	"data/TEXTURE/pointer.png",       // 5: pointer
-};
+void Fill(HDC dc, const RECT& rect, COLORREF color)
+{
+    SetDCBrushColor(dc, color);
+    FillRect(dc, &rect, static_cast<HBRUSH>(GetStockObject(DC_BRUSH)));
+}
 
-static int   g_CurrentBG = 0;       // 現在表示中の背景番号
-static float g_ElapsedTime = 0.0f;  // 経過時間カウント
-static int   g_MenuSelect = 0;      // 現在のメニュー選択インデックス (0:Start, 1:Help, 2:Quit)
-static float g_Alpha = 1.0f;        // 点滅用アルファ値
-static BOOL  g_AlphaFlag = TRUE;    // アルファ値増減フラグ
-static BOOL  g_Load = FALSE;        // ロード済みフラグ
+void Label(HDC dc, RECT rect, const wchar_t* label, int height, int weight,
+           UINT alignment, const wchar_t* face = L"Segoe UI")
+{
+    HFONT font = CreateFontW(-height, 0, 0, 0, weight, FALSE, FALSE, FALSE,
+        DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, ANTIALIASED_QUALITY,
+        DEFAULT_PITCH | FF_SWISS, face);
+    HGDIOBJ old = font ? SelectObject(dc, font) : nullptr;
+    SetBkMode(dc, TRANSPARENT);
+    SetTextColor(dc, Ivory);
+    DrawTextW(dc, label, -1, &rect, alignment | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
+    if (font)
+    {
+        SelectObject(dc, old);
+        DeleteObject(font);
+    }
+}
 
-//=============================================================================
-// 初期化処理
-//=============================================================================
+void DrawSettings(HDC dc)
+{
+    Label(dc, {76, 166, 744, 461}, L"SETTINGS", 140, FW_HEAVY, DT_LEFT, L"Bahnschrift Condensed");
+    Fill(dc, {76, 544, 634, 746}, RGB(24, 23, 22));
+    Label(dc, {98, 560, 445, 641}, L"MASTER VOLUME", 42, FW_SEMIBOLD, DT_LEFT, L"Bahnschrift Condensed");
+    wchar_t value[8];
+    swprintf_s(value, L"%d%%", GetMasterVolumePercent());
+    Label(dc, {450, 560, 612, 641}, value, 40, FW_SEMIBOLD, DT_RIGHT);
+
+    Fill(dc, VolumeBar, RGB(70, 63, 57));
+    const int thumb = VolumeBar.left + MulDiv(VolumeBar.right - VolumeBar.left, GetMasterVolumePercent(), 100);
+    Fill(dc, {VolumeBar.left, VolumeBar.top, thumb, VolumeBar.bottom}, RGB(166, 42, 38));
+    Fill(dc, {thumb - 3, VolumeBar.top - 5, thumb + 3, VolumeBar.bottom + 5}, Ivory);
+    Fill(dc, LowerButton, RGB(80, 31, 28));
+    Fill(dc, RaiseButton, RGB(80, 31, 28));
+    // Draw the marks geometrically so font metrics cannot shift their centers.
+    constexpr LONG markHalfWidth = 11;
+    constexpr LONG markHalfStroke = 2;
+    const LONG centerY = (LowerButton.top + LowerButton.bottom) / 2;
+    const LONG lowerX = (LowerButton.left + LowerButton.right) / 2;
+    const LONG raiseX = (RaiseButton.left + RaiseButton.right) / 2;
+    Fill(dc, {lowerX - markHalfWidth, centerY - markHalfStroke,
+        lowerX + markHalfWidth, centerY + markHalfStroke}, Ivory);
+    Fill(dc, {raiseX - markHalfWidth, centerY - markHalfStroke,
+        raiseX + markHalfWidth, centerY + markHalfStroke}, Ivory);
+    Fill(dc, {raiseX - markHalfStroke, centerY - markHalfWidth,
+        raiseX + markHalfStroke, centerY + markHalfWidth}, Ivory);
+
+    Fill(dc, BackButton, RGB(105, 25, 23));
+    Label(dc, BackButton, L"BACK  [ENTER]", 45, FW_SEMIBOLD, DT_CENTER, L"Bahnschrift Condensed");
+    Label(dc, {76, 916, 700, 982}, L"\u2190 \u2192  Adjust volume", 29, FW_NORMAL, DT_LEFT);
+}
+
+void DrawMenu(HDC dc)
+{
+    Label(dc, {76, 166, 744, 461}, L"THE FEAR", 166, FW_HEAVY, DT_LEFT, L"Bahnschrift Condensed");
+
+    const wchar_t* labels[] = {L"START", L"SETTINGS", L"QUIT"};
+    for (int i = 0; i < _countof(Buttons); ++i)
+    {
+        const RECT button = Buttons[i];
+        const bool active = i == selected;
+        Fill(dc, button, active ? RGB(142, 42, 40) : RGB(99, 90, 79));
+        Fill(dc, {button.left + 3, button.top + 3, button.right - 3, button.bottom - 3},
+            active ? RGB(105, 25, 23) : RGB(24, 23, 22));
+        Fill(dc, {button.left, button.top, button.left + 9, button.bottom},
+            active ? RGB(232, 43, 43) : RGB(99, 90, 79));
+        Label(dc, {button.left + 50, button.top, button.right - 90, button.bottom},
+            labels[i], 52, FW_SEMIBOLD, DT_LEFT, L"Bahnschrift Condensed");
+        if (active)
+            Label(dc, {button.right - 100, button.top, button.right - 20, button.bottom},
+                L"\u2192", 53, FW_NORMAL, DT_CENTER);
+    }
+    Label(dc, {76, 916, 650, 982}, L"\u2191 \u2193  Select       ENTER  Confirm", 29, FW_NORMAL, DT_LEFT);
+}
+
+void ActivateSelection()
+{
+    if (selected == 0)
+        SetFade(FADE_OUT, MODE_GAME);
+    else if (selected == 1)
+        settingsOpen = true;
+    else
+        PostQuitMessage(0);
+}
+}
+
 HRESULT InitTitle(void)
 {
-    ID3D11Device* pDevice = GetDevice();
+    selected = 0;
+    settingsOpen = false;
+    HRESULT result = LoadGameTexture("data/TEXTURE/bg1.jpg", &background);
+    if (FAILED(result)) return result;
 
-    // テクスチャの読み込み
-    for (int i = 0; i < TEXTURE_MAX; i++)
-    {
-        D3DX11CreateShaderResourceViewFromFile(GetDevice(),
-            g_TexturName[i], NULL, NULL, &g_Texture[i], NULL);
-    }
-
-    // 頂点バッファの作成
-    D3D11_BUFFER_DESC bd;
-    ZeroMemory(&bd, sizeof(bd));
-    bd.Usage = D3D11_USAGE_DYNAMIC;
-    bd.ByteWidth = sizeof(VERTEX_3D) * 4;
-    bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-    bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-    GetDevice()->CreateBuffer(&bd, NULL, &g_VertexBuffer);
-
-    // 変数の初期化
-    g_ElapsedTime = 0.0f;
-    g_MenuSelect = 0;
-    g_Alpha = 1.0f;
-    g_Load = TRUE;
-
-    return S_OK;
+    D3D11_BUFFER_DESC desc{};
+    desc.Usage = D3D11_USAGE_DYNAMIC;
+    desc.ByteWidth = sizeof(VERTEX_3D) * 4;
+    desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+    desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+    result = GetDevice()->CreateBuffer(&desc, nullptr, &vertices);
+    if (FAILED(result)) UninitTitle();
+    return result;
 }
 
-//=============================================================================
-// 終了処理
-//=============================================================================
 void UninitTitle(void)
 {
-    if (g_Load == FALSE) return;
-
-    // 頂点バッファの解放
-    if (g_VertexBuffer)
-    {
-        g_VertexBuffer->Release();
-        g_VertexBuffer = NULL;
-    }
-
-    // テクスチャの解放
-    for (int i = 0; i < TEXTURE_MAX; i++)
-    {
-        if (g_Texture[i])
-        {
-            g_Texture[i]->Release();
-            g_Texture[i] = NULL;
-        }
-    }
-
-    g_Load = FALSE;
+    if (vertices) vertices->Release();
+    if (background) background->Release();
+    vertices = nullptr;
+    background = nullptr;
 }
 
-//=============================================================================
-// 更新処理
-//=============================================================================
 void UpdateTitle(void)
 {
-    // --- 背景切り替えアニメーション ---
-    g_ElapsedTime += 1.0f;
-    if (g_CurrentBG == 0 && g_ElapsedTime >= 300.0f)
+    if (GetFade() != FADE_NONE) return;
+    if (settingsOpen)
     {
-        g_CurrentBG = 1; // 雷背景へ
-        g_ElapsedTime = 0.0f;
-    }
-    else if (g_CurrentBG == 1 && g_ElapsedTime >= 50.0f)
-    {
-        g_CurrentBG = 0; // 通常背景へ戻す
-        g_ElapsedTime = 0.0f;
+        if (GetKeyboardTrigger(DIK_LEFT))
+            SetMasterVolumePercent(GetMasterVolumePercent() - 5);
+        else if (GetKeyboardTrigger(DIK_RIGHT))
+            SetMasterVolumePercent(GetMasterVolumePercent() + 5);
+        if (GetKeyboardTrigger(DIK_RETURN))
+            settingsOpen = false;
+        return;
     }
 
-    // --- メニュー選択の入力制御 ---
+    constexpr int count = _countof(Buttons);
     if (GetKeyboardTrigger(DIK_DOWN) || GetKeyboardTrigger(DIK_S))
-    {
-        g_MenuSelect = (g_MenuSelect + 1) % 2; // 下へ移動
-    }
+        selected = (selected + 1) % count;
     else if (GetKeyboardTrigger(DIK_UP) || GetKeyboardTrigger(DIK_W))
-    {
-        g_MenuSelect = (g_MenuSelect + 2) % 2; // 上へ移動
-    }
-
-    // --- 決定操作 ---
+        selected = (selected + count - 1) % count;
     if (GetKeyboardTrigger(DIK_RETURN))
+        ActivateSelection();
+}
+
+void HandleTitleClick(HWND window, int x, int y)
+{
+    if (GetFade() != FADE_NONE) return;
+    RECT client;
+    if (!GetClientRect(window, &client) || client.right <= 0 || client.bottom <= 0) return;
+    const POINT point = {MulDiv(x, SCREEN_WIDTH, client.right), MulDiv(y, SCREEN_HEIGHT, client.bottom)};
+    if (settingsOpen)
     {
-        switch (g_MenuSelect)
-        {
-        case 0: // スタート
-            SetFade(FADE_OUT, MODE_GAME);
-            break;
-        case 1: // 終了
-            exit(0);
-            break;
-        }
+        if (PtInRect(&BackButton, point))
+            settingsOpen = false;
+        else if (PtInRect(&LowerButton, point))
+            SetMasterVolumePercent(GetMasterVolumePercent() - 5);
+        else if (PtInRect(&RaiseButton, point))
+            SetMasterVolumePercent(GetMasterVolumePercent() + 5);
+        else if (PtInRect(&VolumeHit, point))
+            SetMasterVolumePercent(MulDiv(point.x - VolumeBar.left, 100, VolumeBar.right - VolumeBar.left));
+        return;
     }
 
-    // --- ロゴの点滅（アルファアニメーション） ---
-    if (g_AlphaFlag)
+    for (int i = 0; i < _countof(Buttons); ++i)
     {
-        g_Alpha -= 0.02f;
-        if (g_Alpha <= 0.5f) g_AlphaFlag = FALSE;
-    }
-    else
-    {
-        g_Alpha += 0.02f;
-        if (g_Alpha >= 1.0f) g_AlphaFlag = TRUE;
+        if (!PtInRect(&Buttons[i], point)) continue;
+        selected = i;
+        ActivateSelection();
+        return;
     }
 }
 
-//=============================================================================
-// 描画処理
-//=============================================================================
 void DrawTitle(void)
 {
-    // 頂点バッファの設定
-    UINT stride = sizeof(VERTEX_3D);
-    UINT offset = 0;
-    GetDeviceContext()->IASetVertexBuffers(0, 1, &g_VertexBuffer, &stride, &offset);
+    if (vertices && background)
+    {
+        auto context = GetDeviceContext();
+        const UINT stride = sizeof(VERTEX_3D), offset = 0;
+        context->IASetVertexBuffers(0, 1, &vertices, &stride, &offset);
+        context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+        SetWorldViewProjection2D();
 
-    // 2D描画用マトリクス設定
-    SetWorldViewProjection2D();
-    GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+        MATERIAL material{};
+        material.Diffuse = {1, 1, 1, 1};
+        SetMaterial(material);
+        context->PSSetShaderResources(0, 1, &background);
+        SetSpriteLeftTop(vertices, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 1, 1);
+        context->Draw(4, 0);
 
-    // --- 1. 背景の描画 ---
-    GetDeviceContext()->PSSetShaderResources(0, 1, &g_Texture[g_CurrentBG]);
-    SetSprite(g_VertexBuffer, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 1, 1);
-    GetDeviceContext()->Draw(4, 0);
-
-    // --- 2. タイトルロゴの描画 (点滅効果付き) ---
-    GetDeviceContext()->PSSetShaderResources(0, 1, &g_Texture[2]);
-    SetSpriteColor(g_VertexBuffer, SCREEN_WIDTH / 2, 200, 480, 80, 0, 0, 1, 1, XMFLOAT4(1, 1, 1, g_Alpha));
-    GetDeviceContext()->Draw(4, 0);
-
-    // --- 3. メニューボタンの描画 (選択中のみ強調表示) ---
-    float menuX = SCREEN_WIDTH / 2;
-
-    // ゲーム開始ボタン
-    GetDeviceContext()->PSSetShaderResources(0, 1, &g_Texture[3]);
-    SetSpriteColor(g_VertexBuffer, menuX, 500, 240, 60, 0, 0, 1, 1,
-        XMFLOAT4(1, 1, 1, (g_MenuSelect == 0 ? 1.0f : 0.4f)));
-    GetDeviceContext()->Draw(4, 0);
-
-    // ヘルプボタン
-    GetDeviceContext()->PSSetShaderResources(0, 1, &g_Texture[4]);
-    SetSpriteColor(g_VertexBuffer, menuX, 600, 240, 60, 0, 0, 1, 1,
-        XMFLOAT4(1, 1, 1, (g_MenuSelect == 1 ? 1.0f : 0.4f)));
-    GetDeviceContext()->Draw(4, 0);
-
-
-    // --- 4. セレクター（カーソル）の描画 ---
-    // 選択されている項目の横に目印を表示
-    float cursorY = 500.0f + (g_MenuSelect * 100.0f);
-    GetDeviceContext()->PSSetShaderResources(0, 1, &g_Texture[5]); // ロゴテクスチャを流用（必要に応じて変更）
-    SetSpriteColor(g_VertexBuffer, menuX - 200, cursorY, 40, 40, 0, 0, 1, 1, XMFLOAT4(1, 0.5f, 1, 1));
-    GetDeviceContext()->Draw(4, 0);
+        D3D11_MAPPED_SUBRESOURCE mapping;
+        if (SUCCEEDED(context->Map(vertices, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapping)))
+        {
+            auto quad = static_cast<VERTEX_3D*>(mapping.pData);
+            XMFLOAT3 normal = {0, 0, -1};
+            XMFLOAT4 dark = {0, 0, 0, 0.76f};
+            XMFLOAT4 clear = {0, 0, 0, 0};
+            quad[0] = {{0, 0, 0}, normal, dark, {}};
+            quad[1] = {{900, 0, 0}, normal, clear, {}};
+            quad[2] = {{0, SCREEN_HEIGHT, 0}, normal, dark, {}};
+            quad[3] = {{900, SCREEN_HEIGHT, 0}, normal, clear, {}};
+            context->Unmap(vertices, 0);
+            material.noTexSampling = 1;
+            SetMaterial(material);
+            context->Draw(4, 0);
+        }
+    }
+    DrawBackBufferOverlay(settingsOpen ? DrawSettings : DrawMenu);
 }

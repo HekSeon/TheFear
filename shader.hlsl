@@ -212,7 +212,7 @@ void PixelShaderPolygon(in float4 inPosition : SV_POSITION,
 	//ÉtÉHÉO
 	if (Fog.Enable == 1)
 	{
-		float z = inPosition.z*inPosition.w;
+		float z = length(inWorldPos.xyz - Camera.xyz);
 		float f = (Fog.Distance.y - z) / (Fog.Distance.y - Fog.Distance.x);
 		f = saturate(f);
 		outDiffuse = f * color + (1 - f)*Fog.FogColor;
@@ -244,4 +244,79 @@ void PixelShaderPolygon(in float4 inPosition : SV_POSITION,
 
         }
     }
+}
+
+struct SwordFragmentVertex
+{
+    float4 position : SV_POSITION;
+    float4 normal : NORMAL0;
+    float2 texCoord : TEXCOORD0;
+    float4 diffuse : COLOR0;
+    float4 worldPosition : POSITION0;
+    float4 localPosition : POSITION1;
+};
+
+[maxvertexcount(3)]
+void SwordFragmentGeometry(triangle SwordFragmentVertex vertices[3],
+                           inout TriangleStream<SwordFragmentVertex> stream)
+{
+    float3 center = (vertices[0].localPosition.xyz + vertices[1].localPosition.xyz +
+                     vertices[2].localPosition.xyz) / 3.0;
+    // A stable seed lets each triangle retrace its motion during reconstruction.
+    float3 seed = frac(sin(float3(dot(center, float3(13.1, 8.3, 17.7)),
+                                  dot(center, float3(7.4, 15.9, 3.1)),
+                                  dot(center, float3(1.3, 19.6, 8.6)))) * 43758.5453);
+    float progress = smoothstep(seed.x * 0.32, 0.92 + seed.y * 0.07, DissolveThreshold);
+    if (progress >= 1.0)
+        return;
+
+    float3 drift = (seed * 2.0 - 1.0) * float3(110.0, 90.0, 110.0);
+    drift.y += 48.0;
+    [unroll]
+    for (int i = 0; i < 3; ++i)
+    {
+        SwordFragmentVertex fragment = vertices[i];
+        float3 local = center + (fragment.localPosition.xyz - center) *
+            (1.0 - progress) + drift * progress;
+        fragment.localPosition = float4(local, 1.0);
+        fragment.worldPosition = mul(fragment.localPosition, World);
+        fragment.position = mul(mul(fragment.worldPosition, View), Projection);
+        stream.Append(fragment);
+    }
+    stream.RestartStrip();
+}
+
+cbuffer SkyRayBuffer : register(b9)
+{
+    float4 SkyRight;
+    float4 SkyUp;
+    float4 SkyForward;
+};
+
+struct SkyVertexOutput
+{
+    float4 position : SV_POSITION;
+    float3 direction : TEXCOORD0;
+};
+
+SkyVertexOutput SkyVertex(uint vertex : SV_VertexID)
+{
+    float2 corner = float2((vertex << 1) & 2, vertex & 2);
+    float2 ndc = corner * float2(2.0, -2.0) + float2(-1.0, 1.0);
+    SkyVertexOutput result;
+    result.position = float4(ndc, 1.0, 1.0);
+    result.direction = SkyForward.xyz + ndc.x * SkyRight.xyz + ndc.y * SkyUp.xyz;
+    return result;
+}
+
+float4 SkyPixel(SkyVertexOutput input) : SV_Target
+{
+    float3 direction = normalize(input.direction);
+    float longitude = atan2(direction.x, direction.z) * 0.159154943;
+    // Mirror the square photo at azimuth boundaries so it has no wrap seam.
+    float u = 1.0 - abs(frac(longitude + 0.25) * 2.0 - 1.0);
+    float elevation = asin(clamp(direction.y, -1.0, 1.0)) * 0.636619772;
+    float v = saturate(0.91 - elevation * 0.91);
+    float2 uv = clamp(float2(u, v), 0.002, 0.998);
+    return float4(g_Texture.Sample(g_SamplerState, uv).rgb, 1.0);
 }

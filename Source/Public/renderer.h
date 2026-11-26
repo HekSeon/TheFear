@@ -93,6 +93,9 @@ void Clear(void);
 void Present(void);
 
 ID3D11Device* GetDevice(void);
+HRESULT LoadGameTexture(const char* path, ID3D11ShaderResourceView** texture);
+HRESULT CompileGameShader(const char* entry, const char* profile, UINT flags, ID3DBlob** shader);
+void SetSceneShaders(void);
 ID3D11DeviceContext* GetDeviceContext(void);
 
 void SetDepthEnable(BOOL Enable);
@@ -114,6 +117,7 @@ void SetFogEnable(BOOL flag);
 void SetFog(FOG* fog);
 
 void DebugTextOut(char* text, int x, int y);
+void DrawBackBufferOverlay(void (*draw)(HDC));
 
 void SetFuchi(int flag);
 void SetShaderCamera(XMFLOAT3 pos);
@@ -121,3 +125,4 @@ void SetShaderCamera(XMFLOAT3 pos);
 void SetClearColor(float* color4);
 
 void SetDissolve(float threshold, float minY, float maxY, bool dissolveEnable);
+void SetSwordFragments(bool enabled, float progress);
